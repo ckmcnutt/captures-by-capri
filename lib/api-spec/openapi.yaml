@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Captures By Capri — Photography portfolio and booking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: gallery
+    description: Portfolio gallery images
+  - name: bookings
+    description: Photoshoot bookings management
 paths:
   /healthz:
     get:
@@ -24,6 +28,239 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /gallery:
+    get:
+      operationId: listGallery
+      tags: [gallery]
+      summary: List all gallery images
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of gallery images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryImage"
+    post:
+      operationId: createGalleryImage
+      tags: [gallery]
+      summary: Add a gallery image (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryImageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryImage"
+
+  /gallery/categories:
+    get:
+      operationId: listGalleryCategories
+      tags: [gallery]
+      summary: List all gallery categories
+      responses:
+        "200":
+          description: List of categories with counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryCategory"
+
+  /gallery/{id}:
+    get:
+      operationId: getGalleryImage
+      tags: [gallery]
+      summary: Get a single gallery image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Gallery image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryImage"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteGalleryImage
+      tags: [gallery]
+      summary: Delete a gallery image (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List all bookings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, declined]
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a booking request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/stats:
+    get:
+      operationId: getBookingStats
+      tags: [bookings]
+      summary: Get booking summary stats
+      responses:
+        "200":
+          description: Booking statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingStats"
+
+  /bookings/recent:
+    get:
+      operationId: listRecentBookings
+      tags: [bookings]
+      summary: List most recent bookings (admin dashboard feed)
+      responses:
+        "200":
+          description: Recent bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get a single booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+
+  /bookings/{id}/approve:
+    patch:
+      operationId: approveBooking
+      tags: [bookings]
+      summary: Approve a booking and send SMS confirmation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/decline:
+    patch:
+      operationId: declineBooking
+      tags: [bookings]
+      summary: Decline a booking and send SMS notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeclineInput"
+      responses:
+        "200":
+          description: Declined booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/webhook/calcom:
+    post:
+      operationId: calcomWebhook
+      tags: [bookings]
+      summary: Handle Cal.com booking webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalcomWebhookPayload"
+      responses:
+        "200":
+          description: Processed
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +271,152 @@ components:
       required:
         - status
 
+    GalleryImage:
+      type: object
+      required: [id, title, url, category, displayOrder, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        category:
+          type: string
+        displayOrder:
+          type: integer
+        featured:
+          type: boolean
+        createdAt:
+          type: string
+
+    GalleryImageInput:
+      type: object
+      required: [title, url, category]
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        category:
+          type: string
+        displayOrder:
+          type: integer
+        featured:
+          type: boolean
+
+    GalleryCategory:
+      type: object
+      required: [name, count]
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+
+    Booking:
+      type: object
+      required: [id, clientName, clientEmail, clientPhone, sessionType, preferredDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        clientName:
+          type: string
+        clientEmail:
+          type: string
+        clientPhone:
+          type: string
+        sessionType:
+          type: string
+        preferredDate:
+          type: string
+        preferredTime:
+          type: ["string", "null"]
+        message:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, declined]
+        calBookingId:
+          type: ["string", "null"]
+        declineReason:
+          type: ["string", "null"]
+        smsSent:
+          type: boolean
+        adminNotified:
+          type: boolean
+        createdAt:
+          type: string
+
+    BookingInput:
+      type: object
+      required: [clientName, clientEmail, clientPhone, sessionType, preferredDate]
+      properties:
+        clientName:
+          type: string
+        clientEmail:
+          type: string
+        clientPhone:
+          type: string
+        sessionType:
+          type: string
+        preferredDate:
+          type: string
+        preferredTime:
+          type: string
+        message:
+          type: string
+        calBookingId:
+          type: string
+
+    DeclineInput:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    BookingStats:
+      type: object
+      required: [total, pending, approved, declined, thisMonth]
+      properties:
+        total:
+          type: integer
+        pending:
+          type: integer
+        approved:
+          type: integer
+        declined:
+          type: integer
+        thisMonth:
+          type: integer
+
+    CalcomWebhookPayload:
+      type: object
+      required: [triggerEvent, payload]
+      properties:
+        triggerEvent:
+          type: string
+        payload:
+          type: object
+          properties:
+            uid:
+              type: string
+            title:
+              type: string
+            startTime:
+              type: string
+            endTime:
+              type: string
+            attendees:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  timeZone:
+                    type: string
+            responses:
+              type: object

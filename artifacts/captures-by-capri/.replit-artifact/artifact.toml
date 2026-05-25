@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Captures By Capri"
+version = "1.0.0"
+id = "artifacts/captures-by-capri"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24316
+
+[services.development]
+run = "pnpm --filter @workspace/captures-by-capri run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/captures-by-capri", "run", "build" ]
+publicDir = "artifacts/captures-by-capri/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24316"
+BASE_PATH = "/"

@@ -1,0 +1,44 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "6-7lLoSG0axqu23bb4Exw"
+uri = "file://artifacts/captures-by-capri/public/images/hero.png"
+type = "image"
+title = "Hero cinematic couple portrait"
+
+[[generated]]
+id = "g_Dn33z15pl5sFTBpElBD"
+uri = "file://artifacts/captures-by-capri/public/images/portfolio-1.png"
+type = "image"
+title = "Editorial portrait of bride"
+
+[[generated]]
+id = "L3opDQBkeuspwMtmdkd1W"
+uri = "file://artifacts/captures-by-capri/public/images/portfolio-2.png"
+type = "image"
+title = "Black and white couple shot"
+
+[[generated]]
+id = "JpK-5isedreyMUBp0Dk80"
+uri = "file://artifacts/captures-by-capri/public/images/portfolio-3.png"
+type = "image"
+title = "Details shot rings"
+
+[[generated]]
+id = "nbkcPnCs0t5pkeuEtLKVx"
+uri = "file://artifacts/captures-by-capri/public/images/portfolio-4.png"
+type = "image"
+title = "Sunset beach couple silhouette"
+
+[[generated]]
+id = "-g2QEbj9tgteBofA7TRgd"
+uri = "file://artifacts/captures-by-capri/public/images/portfolio-5.png"
+type = "image"
+title = "Editorial lifestyle portrait"
+
+[[generated]]
+id = "VS2-kyEbSRxu_ELqz9Gu_"
+uri = "file://artifacts/captures-by-capri/public/images/portfolio-6.png"
+type = "image"
+title = "Maternity fine art portrait"
