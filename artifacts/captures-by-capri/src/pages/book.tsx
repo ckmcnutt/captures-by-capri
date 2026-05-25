@@ -13,7 +13,7 @@ export default function Book() {
           <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Book a Session</p>
           <h1 className="text-5xl md:text-6xl font-serif">Let's Create Together</h1>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            Choose a time that works for you. Sessions are confirmed instantly through Cal.com.
+            Scroll down to choose a time that works for you. Sessions are booked through Cal.com.
           </p>
         </motion.div>
       </section>
