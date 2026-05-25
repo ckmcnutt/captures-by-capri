@@ -31,9 +31,9 @@ export default function Book() {
               <ul className="space-y-4 text-sm text-muted-foreground">
                 {[
                   "Pick any available slot — no back and forth",
-                  "Instant confirmation sent to your email",
-                  "A detailed questionnaire follows your booking",
-                  "Full gallery delivered within 2–3 weeks",
+                  "A followup email or text with additional questions following your booking",
+                  "10-15 editted photos for a 30 minute session",
+                  "20-30 editted photos for a 1 hour session",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-primary mt-0.5 shrink-0">—</span>
