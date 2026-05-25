@@ -7,8 +7,6 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Portfolio from "@/pages/portfolio";
 import Book from "@/pages/book";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminBookingDetail from "@/pages/admin/booking-detail";
 import { Layout } from "@/components/layout";
 
 const queryClient = new QueryClient();
@@ -24,12 +22,6 @@ function Router() {
       </Route>
       <Route path="/book">
         <Layout><Book /></Layout>
-      </Route>
-      <Route path="/admin">
-        <AdminDashboard />
-      </Route>
-      <Route path="/admin/bookings/:id">
-        <AdminBookingDetail />
       </Route>
       <Route component={NotFound} />
     </Switch>
