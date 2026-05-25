@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { useListGallery, useListGalleryCategories } from "@workspace/api-client-react";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -20,7 +18,7 @@ export default function Portfolio() {
     { id: 107, url: "/images/hero.png", category: "Wedding", title: "Cinematic Field" },
   ];
 
-  const categories = ["All", "Wedding", "Engagement", "Portrait", "Maternity", "Details"];
+  const categories = ["All", "Brand", "Couples", "Engagement", "Family", "Maternity", "Portrait", "Other"];
 
   const filteredImages = selectedCategory === "All" 
     ? staticImages 
