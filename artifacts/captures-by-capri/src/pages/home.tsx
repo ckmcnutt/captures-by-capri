@@ -9,7 +9,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/hero.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9oZXJvLkpQRyIsImlhdCI6MTc3OTc0MTYyOSwiZXhwIjozMTU1MzQ4MjA1NjI5fQ.kb6h7UXGWkeUr4Gq9xkljqOEkNzRN7zCqTHu0pEVSkg" 
+            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/hero2.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9oZXJvMi5KUEciLCJpYXQiOjE3Nzk3NDE5ODYsImV4cCI6MTc3OTgyODM4Nn0.oCsrOax64LMdDGF_nNpUfoWYRjQTXgqrIa9T2TQcrME" 
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
