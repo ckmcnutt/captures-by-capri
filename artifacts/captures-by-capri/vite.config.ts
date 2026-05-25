@@ -26,8 +26,14 @@ if (!basePath) {
   );
 }
 
+const calUrl =
+  process.env.CAL_URL ?? "https://cal.com/capturesbycapri/appointment";
+
 export default defineConfig({
   base: basePath,
+  define: {
+    __CAL_URL__: JSON.stringify(calUrl),
+  },
   plugins: [
     react(),
     tailwindcss(),

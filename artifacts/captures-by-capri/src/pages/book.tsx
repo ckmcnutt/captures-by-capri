@@ -310,7 +310,7 @@ export default function Book() {
 
             <div className="border border-border overflow-hidden bg-card" data-testid="calcom-embed">
               <iframe
-                src="https://cal.com/capri/photoshoot"
+                src={__CAL_URL__}
                 width="100%"
                 height="600"
                 frameBorder="0"
