@@ -9,7 +9,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/hero.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9oZXJvLkpQRyIsImlhdCI6MTc3OTc0MjE4MSwiZXhwIjozMTU1MzQ4MjA2MTgxfQ.MpGoq7WSof-tMCovMnD-9bAxUZmsxDwp3Z0bK8QAL-c" 
+            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/hero.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2hlcm8uSlBHIiwiaWF0IjoxNzc5NzQ0MTIxLCJleHAiOjE3Nzk4MzA1MjF9.QHMNC7FpIByw2Xdx9VzGkArcRjV20WYtRc6q1EyE8wc" 
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
@@ -49,7 +49,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Philosophy Section */}
+      {/* Meet Me Section */}
       <section className="py-32 md:py-48 px-6">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -59,22 +59,19 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/meet_capri.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL21lZXRfY2FwcmkuSlBHIiwiaWF0IjoxNzc5NzQyNDc0LCJleHAiOjE3Nzk4Mjg4NzR9.YEfynbOFi0OGA8o63AfNv1BOzT1Y3O7OqO-MvJjJpyU" 
-                alt="Black and white romantic portrait" 
+                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/meet_me.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL21lZXRfbWUuSlBHIiwiaWF0IjoxNzc5NzQ0MTQ2LCJleHAiOjE3Nzk4MzA1NDZ9.3z7_nsvTD92gqm2G5I-s4dzZxUQNUw7XjnSH11nk3f4" 
+                alt="Self Portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
             </div>
             <div className="order-1 md:order-2 space-y-8">
-              <h2 className="text-sm tracking-[0.3em] text-muted-foreground uppercase">The Philosophy</h2>
+              <h2 className="text-sm tracking-[0.3em] text-muted-foreground uppercase">Meet Me</h2>
               <h3 className="text-4xl md:text-5xl font-serif leading-tight">
-                Quiet luxury that doesn't need to shout.
+                I am a mom, a wife, and someone who genuinely loves seeing life through photos.
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                I believe in capturing moments with patience and precision. My approach blends photojournalism with fine art editorial styling, creating images that feel both completely natural and exquisitely composed.
+                By day, I work as a CT technologist doing 3D image reconstruction, which basically means I am a photographer and Photoshop artist for the medical world full time. I am passionate about capturing details, telling stories through images, and finding beauty in everyday moments. 
               </p>
-              <Link href="/about" className="inline-block border-b border-foreground pb-1 text-sm tracking-widest uppercase mt-8 hover:text-primary transition-colors">
-                Meet Capri
-              </Link>
             </div>
           </div>
         </div>
@@ -92,9 +89,9 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { src: "/images/portfolio-1.png", title: "Editorial Bride" },
-              { src: "/images/portfolio-5.png", title: "Lifestyle Portrait", className: "md:mt-16" },
-              { src: "/images/portfolio-6.png", title: "Maternity Fine Art", className: "md:mt-32" }
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/feature1.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2ZlYXR1cmUxLmpwZyIsImlhdCI6MTc3OTc0NDE3NiwiZXhwIjoxNzc5ODMwNTc2fQ.akhky-qZFWic6m6k-RInD-cglMFBpRVL--uTUi-ct-o", title: "Mother & Son" },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/feature2.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2ZlYXR1cmUyLmpwZyIsImlhdCI6MTc3OTc0NDIxMSwiZXhwIjoxNzc5ODMwNjExfQ.UrYa1LmIsM-rWacRp9MzbbGukuvaLZr63Azzs0xM-bc", title: "Senior Portrait", className: "md:mt-16" },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/feature3.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2ZlYXR1cmUzLkpQRyIsImlhdCI6MTc3OTc0NDI0NSwiZXhwIjoxNzc5ODMwNjQ1fQ._8Z1ieN40245VucyVt-VzPwNxhk1z950_O9QwbdtlLg", title: "Couple", className: "md:mt-32" }
             ].map((img, i) => (
               <motion.div 
                 key={i}
