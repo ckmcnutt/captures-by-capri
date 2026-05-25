@@ -67,7 +67,7 @@ export default function Book() {
               <iframe
                 src={__CAL_URL__}
                 width="100%"
-                height="100%"
+                height="50vh"
                 frameBorder="0"
                 title="Book a session with Capri"
                 className="w-full"
