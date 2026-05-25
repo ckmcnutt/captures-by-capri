@@ -70,9 +70,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-6 md:px-12 flex flex-col items-center text-center">
           <h2 className="font-serif text-3xl tracking-widest uppercase mb-8">Captures by Capri</h2>
           <div className="flex gap-6 mb-12 text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Instagram</a>
-            <a href="#" className="hover:text-foreground transition-colors">Pinterest</a>
-            <a href="#" className="hover:text-foreground transition-colors">Vogue</a>
+            <a href="https://www.instagram.com/capri.captures" className="hover:text-foreground transition-colors">Instagram</a>
           </div>
           <p className="text-muted-foreground text-sm tracking-wider uppercase">
             © {new Date().getFullYear()} Capri Photography. All rights reserved.

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { getSeason } from "@/lib/utils";
 
 export default function Home() {
   return (
@@ -125,7 +126,7 @@ export default function Home() {
       <section className="py-48 px-6 text-center">
         <div className="max-w-3xl mx-auto space-y-10">
           <h2 className="text-5xl md:text-7xl font-serif">Let's create something beautiful together.</h2>
-          <p className="text-muted-foreground text-lg uppercase tracking-widest">Now booking for 2024 and 2025.</p>
+          <p className="text-muted-foreground text-lg uppercase tracking-widest">Now booking for {getSeason()} {new Date().getFullYear()}.</p>
           <div className="pt-8">
             <Link href="/book" className="bg-foreground text-background px-12 py-5 text-sm tracking-widest uppercase hover:bg-foreground/90 transition-all">
               Request a Session
