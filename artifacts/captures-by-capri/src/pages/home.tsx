@@ -9,7 +9,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/hero3.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9oZXJvMy5KUEciLCJpYXQiOjE3Nzk3NDIwNTMsImV4cCI6MTc3OTgyODQ1M30.fvac44PmZ3ryXpftPAbA-XVA_AGvJNgLsvCSxrAdMCo" 
+            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/hero.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9oZXJvLkpQRyIsImlhdCI6MTc3OTc0MjE4MSwiZXhwIjozMTU1MzQ4MjA2MTgxfQ.MpGoq7WSof-tMCovMnD-9bAxUZmsxDwp3Z0bK8QAL-c" 
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
@@ -59,7 +59,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src="/images/portfolio-2.png" 
+                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/meet_capri.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL21lZXRfY2FwcmkuSlBHIiwiaWF0IjoxNzc5NzQyNDc0LCJleHAiOjE3Nzk4Mjg4NzR9.YEfynbOFi0OGA8o63AfNv1BOzT1Y3O7OqO-MvJjJpyU" 
                 alt="Black and white romantic portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
