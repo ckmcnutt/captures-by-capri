@@ -42,18 +42,6 @@ export default function Book() {
               ))}
             </ul>
           </div>
-
-          <div className="space-y-3">
-            <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Sessions</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {["Brand", "Couples", "Engagement", "Family", "Maternity", "Portrait", "Other"].map((type) => (
-                <li key={type} className="flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
-                  {type}
-                </li>
-              ))}
-            </ul>
-          </div>
         </motion.div>
 
         <motion.div
