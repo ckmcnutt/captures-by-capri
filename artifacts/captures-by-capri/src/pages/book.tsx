@@ -18,60 +18,57 @@ export default function Book() {
         </motion.div>
       </section>
 
-      <div className="container mx-auto px-6 max-w-5xl py-24">
-        <div className="grid lg:grid-cols-3 gap-16 items-start">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="space-y-10"
-          >
-            <div className="space-y-4">
-              <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">What to Expect</p>
-              <ul className="space-y-4 text-sm text-muted-foreground">
-                {[
-                  "Pick any available slot — no back and forth",
-                  "A followup email or text with additional questions following your booking",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="text-primary mt-0.5 shrink-0">—</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div className="container mx-auto px-6 max-w-5xl py-24 space-y-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="grid sm:grid-cols-2 gap-12"
+        >
+          <div className="space-y-4">
+            <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">What to Expect</p>
+            <ul className="space-y-4 text-sm text-muted-foreground">
+              {[
+                "Pick any available slot — no back and forth",
+                "A followup email or text with additional questions following your booking",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="text-primary mt-0.5 shrink-0">—</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            <div className="border-t border-border pt-8 space-y-3">
-              <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Sessions</p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {["Portrait", "Engagement", "Wedding", "Maternity", "Family", "Brand"].map((type) => (
-                  <li key={type} className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
-                    {type}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </motion.div>
+          <div className="space-y-3">
+            <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Sessions</p>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {["Portrait", "Engagement", "Wedding", "Maternity", "Family", "Brand"].map((type) => (
+                <li key={type} className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
+                  {type}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="lg:col-span-2"
-          >
-            <div className="border border-border overflow-hidden bg-card" data-testid="calcom-embed">
-              <iframe
-                src={__CAL_URL__}
-                width="100%"
-                height="700px"
-                frameBorder="0"
-                title="Book a session with Capri"
-                className="w-full"
-              />
-            </div>
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
+          <div className="border border-border overflow-hidden bg-card" data-testid="calcom-embed">
+            <iframe
+              src={__CAL_URL__}
+              width="100%"
+              height="700px"
+              frameBorder="0"
+              title="Book a session with Capri"
+              className="w-full"
+            />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
