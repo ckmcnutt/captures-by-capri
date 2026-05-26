@@ -66,7 +66,7 @@ export default function Home() {
               />
             </div>
             <div className="order-1 md:order-2 space-y-8">
-              <h2 className="text-sm tracking-[0.3em] text-muted-foreground uppercase">Meet Me</h2>
+              <h2 className="text-sm tracking-[0.3em] text-muted-foreground uppercase">About Me</h2>
               <h3 className="text-4xl md:text-5xl font-serif leading-tight">
                 I am a mom, a wife, and someone who genuinely loves seeing life through photos.
               </h3>
