@@ -1,22 +1,13 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { staticImages } from "@/lib/static-images";
 
 export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  // Since we might not have real API data yet, let's mix in our static images 
-  // if the API returns empty or fails.
-  const staticImages = [
-    { id: 101, url: "/images/portfolio-1.png", category: "Wedding", title: "Editorial Bride" },
-    { id: 102, url: "/images/portfolio-2.png", category: "Engagement", title: "Parisian Cafe" },
-    { id: 103, url: "/images/portfolio-3.png", category: "Details", title: "Rings" },
-    { id: 104, url: "/images/portfolio-4.png", category: "Engagement", title: "Beach Sunset" },
-    { id: 105, url: "/images/portfolio-5.png", category: "Portrait", title: "Lifestyle Portrait" },
-    { id: 106, url: "/images/portfolio-6.png", category: "Maternity", title: "Fine Art Maternity" },
-    { id: 107, url: "/images/hero.png", category: "Wedding", title: "Cinematic Field" },
-  ];
+  // TODO Build API to get images and categories from Supabase
 
   const categories = ["All", "Brand", "Couples", "Engagement", "Family", "Maternity", "Portrait", "Other"];
 
@@ -68,12 +59,8 @@ export default function Portfolio() {
               >
                 <img 
                   src={image.url} 
-                  alt={image.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                  <span className="text-white tracking-widest uppercase text-sm">{image.title}</span>
-                </div>
               </motion.div>
             ))}
           </AnimatePresence>
