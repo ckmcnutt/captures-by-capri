@@ -29,8 +29,9 @@ export default function Book() {
             <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">What to Expect</p>
             <ul className="space-y-4 text-sm text-muted-foreground">
               {[
-                  "Pick any available slot — no back and forth",
+                  "Pick any available slot - no back and forth",
                   "$35 deposit required at booking - refundable if canceled at least 1 week prior",
+                  "Remainder of balance due 1 day prior to appointment",
                   "A followup email or text with additional questions",
                   "10-15 edited photos for a 30 minute session - $75",
                   "20-30 edited photos for a 1 hour session - $150",
