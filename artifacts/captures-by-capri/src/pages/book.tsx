@@ -34,6 +34,7 @@ export default function Book() {
                   "A followup email or text with additional questions",
                   "10-15 editted photos for a 30 minute session - $75",
                   "20-30 editted photos for a 1 hour session - $150",
+                  "For sessions located over 45 minutes away from Cullman AL, a travel fee may be applied"
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="text-primary mt-0.5 shrink-0">—</span>
