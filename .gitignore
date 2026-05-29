@@ -49,3 +49,6 @@ Thumbs.db
 .local/
 
 res.json
+
+# Supabase
+supabase/.temp
