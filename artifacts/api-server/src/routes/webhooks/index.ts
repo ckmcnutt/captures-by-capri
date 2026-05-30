@@ -63,12 +63,17 @@ router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
       await confirmCalBooking(appt.cal_booking_uid);
     }
 
+    const confirmedStatusId = await getStatusId("appointment_confirmed");
+    if (confirmedStatusId) {
+      await supabase.from("appointment").update({ status_id: confirmedStatusId }).eq("id", appointmentId);
+    }
+
     const depositPaidStatusId = await getStatusId("deposit_paid");
     if (depositPaidStatusId) {
       await supabase.from("appointment").update({ status_id: depositPaidStatusId }).eq("id", appointmentId);
     }
 
-    logger.info({ appointmentId }, "Deposit paid — status set to deposit_paid, Cal.com booking confirmed");
+    logger.info({ appointmentId }, "Deposit paid — status: appointment_confirmed → deposit_paid, Cal.com booking confirmed");
   }
 
   async function handleFinalPaid(appointmentId: number): Promise<void> {
