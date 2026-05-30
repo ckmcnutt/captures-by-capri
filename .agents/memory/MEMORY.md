@@ -1,1 +1,2 @@
 - [Supabase project details](supabase-project.md) — project ID, correct API URL, and migration history for captures-by-capri
+- [Supabase edge fn deploy limits](supabase-edge-fn-deploy.md) — MCP deploy_edge_function: max 7 files AND ~14.6KB total payload; import_map_path required; bundle all modules into lib/bundle.ts to stay within limits.
