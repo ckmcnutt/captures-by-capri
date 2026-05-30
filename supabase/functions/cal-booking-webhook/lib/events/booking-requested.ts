@@ -78,12 +78,12 @@ function normalizePayloadResponses(payload: CalPayload) {
   if (!responses) throw new APIError("No responses in payload", 400);
   const missing: string[] = [];
 
-  const first_name = responses.name.value.first_name
+  const first_name = responses.name.value.firstName
     ? responses.name.value.first_name as string
-    : missing.push("first_name");
-  const last_name = responses.name.value.last_name
+    : missing.push("firstName");
+  const last_name = responses.name.value.lastName
     ? responses.name.value.last_name as string
-    : missing.push("last_name");
+    : missing.push("lastName");
   const email_address = responses.email.value
     ? responses.email.value as string
     : missing.push("email");
@@ -98,9 +98,8 @@ function normalizePayloadResponses(payload: CalPayload) {
   const session_type = responses.session_type.value
     ? responses.session_type.value as string
     : missing.push("session_type");
-  const customer_notes = responses.notes.value
-    ? responses.notes.value as string
-    : missing.push("");
+  // optional
+  const customer_notes = responses.notes.value as string;
 
   if (missing.length) {
     throw new APIError(
@@ -117,6 +116,6 @@ function normalizePayloadResponses(payload: CalPayload) {
     end_time: end_time as string,
     aesthetic: aesthetic as string,
     session_type: session_type as string,
-    customer_notes: customer_notes as string,
+    customer_notes,
   };
 }

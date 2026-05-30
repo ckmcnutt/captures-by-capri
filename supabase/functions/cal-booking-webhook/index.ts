@@ -1,14 +1,13 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 import { APIError } from "./lib/models/api-error.ts";
-import { jsonError, headers } from "./lib/utils.ts";
+import { headers, jsonError } from "./lib/utils.ts";
 import { processWebhookEvent } from "./lib/webhook-event-processor.ts";
 import { Database } from "./lib/database.types.ts";
 import { CalEventMessage } from "./lib/models/cal.ts";
 
 export default {
   fetch: withSupabase<Database>({ auth: ["none"] }, async (req, ctx) => {
-
     if (req.method !== "POST") return jsonError("Method not allowed", 405);
 
     let _msg: CalEventMessage;

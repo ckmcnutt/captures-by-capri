@@ -19,11 +19,11 @@ export class CustomerService {
 
   public async getCustomerByEmail(email: string): Promise<Customer | null> {
     const { data, error } = await this.ctx.supabase
-    .from("customer")
-    .select()
-    .eq("email_address", email);
+      .from("customer")
+      .select()
+      .eq("email_address", email);
 
     if (error) throw error;
     return data[0] ?? null;
-  } 
+  }
 }

@@ -20,7 +20,7 @@ export class AppointmentService {
   public async updateAppointmentStatus(
     appointmentId: number,
     status_id: number,
-    internal_notes: string
+    internal_notes: string,
   ) {
     const { error } = await this.ctx.supabase
       .from("appointment")
