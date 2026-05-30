@@ -13,7 +13,8 @@ router.get("/appointments", isAdmin, async (req, res): Promise<void> => {
     .from("appointment")
     .select(
       `id, start_time, end_time, aesthetic, customer_notes, internal_notes,
-       cal_booking_uid, stripe_deposit_invoice_id, stripe_final_invoice_id,
+       cal_booking_uid, stripe_deposit_invoice_id, stripe_deposit_url,
+       stripe_final_invoice_id, stripe_final_url,
        final_invoice_amount, photo_delivery_url, created_at,
        customer:customer_id ( id, first_name, last_name, email_address, phone_number, preferred_contact_method ),
        category:category_id ( id, category_name, category_desc ),
@@ -55,7 +56,8 @@ router.get("/appointments/:id", isAdmin, async (req, res): Promise<void> => {
     .from("appointment")
     .select(
       `id, start_time, end_time, aesthetic, customer_notes, internal_notes,
-       cal_booking_uid, stripe_deposit_invoice_id, stripe_final_invoice_id,
+       cal_booking_uid, stripe_deposit_invoice_id, stripe_deposit_url,
+       stripe_final_invoice_id, stripe_final_url,
        final_invoice_amount, photo_delivery_url, created_at,
        customer:customer_id ( id, first_name, last_name, email_address, phone_number, preferred_contact_method ),
        category:category_id ( id, category_name, category_desc ),

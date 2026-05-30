@@ -33,7 +33,9 @@ interface Appointment {
   internal_notes: string | null;
   cal_booking_uid: string | null;
   stripe_deposit_invoice_id: string | null;
+  stripe_deposit_url: string | null;
   stripe_final_invoice_id: string | null;
+  stripe_final_url: string | null;
   final_invoice_amount: number | null;
   photo_delivery_url: string | null;
   created_at: string;
@@ -448,17 +450,35 @@ function DetailPanel({
           <section>
             <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Payment</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Deposit invoice</span>
-                <span className="font-mono text-xs truncate max-w-[12rem]">
-                  {appt.stripe_deposit_invoice_id ?? "—"}
-                </span>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Deposit link</span>
+                {appt.stripe_deposit_url ? (
+                  <a
+                    href={appt.stripe_deposit_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 hover:text-blue-300 underline truncate max-w-[12rem]"
+                  >
+                    Open link ↗
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Final invoice</span>
-                <span className="font-mono text-xs truncate max-w-[12rem]">
-                  {appt.stripe_final_invoice_id ?? "—"}
-                </span>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Final invoice link</span>
+                {appt.stripe_final_url ? (
+                  <a
+                    href={appt.stripe_final_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 hover:text-blue-300 underline truncate max-w-[12rem]"
+                  >
+                    Open link ↗
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Final amount</span>

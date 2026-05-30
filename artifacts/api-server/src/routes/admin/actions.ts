@@ -24,7 +24,7 @@ async function getAppointmentWithCustomer(id: number) {
   const { data, error } = await supabase
     .from("appointment")
     .select(
-      `id, cal_booking_uid, stripe_deposit_invoice_id, stripe_final_invoice_id,
+      `id, cal_booking_uid, stripe_deposit_invoice_id, stripe_deposit_url, stripe_final_invoice_id, stripe_final_url,
        final_invoice_amount, end_time,
        customer:customer_id ( first_name, last_name, email_address, phone_number, preferred_contact_method ),
        appointment_status:status_id ( status_name )`
@@ -85,7 +85,7 @@ router.post("/appointments/:id/confirm", isAdmin, async (req, res): Promise<void
     const depositRequestedId = await getStatusId("deposit_requested");
     const { error: updateError } = await supabase
       .from("appointment")
-      .update({ stripe_deposit_invoice_id: paymentLinkId, status_id: depositRequestedId })
+      .update({ stripe_deposit_invoice_id: paymentLinkId, stripe_deposit_url: paymentUrl, status_id: depositRequestedId })
       .eq("id", id);
     if (updateError) throw updateError;
 
@@ -158,6 +158,10 @@ router.post("/appointments/:id/remind-deposit", isAdmin, async (req, res): Promi
     if (!stripe) { res.status(500).json({ error: "Stripe is not configured" }); return; }
 
     const paymentLink = await stripe.paymentLinks.retrieve(appt.stripe_deposit_invoice_id);
+    // Backfill URL if not yet stored
+    if (!appt.stripe_deposit_url) {
+      await supabase.from("appointment").update({ stripe_deposit_url: paymentLink.url }).eq("id", id);
+    }
     const message = `Hi ${customer.first_name}, this is a reminder to complete your $20 deposit with Captures By Capri: ${paymentLink.url}`;
     await notifyClient(customer, message, "Reminder: complete your deposit — Captures By Capri");
 
@@ -220,7 +224,7 @@ router.post("/appointments/:id/send-final-invoice", isAdmin, async (req, res): P
     const invoiceSentId = await getStatusId("invoice_sent");
     const { error: updateErr } = await supabase
       .from("appointment")
-      .update({ stripe_final_invoice_id: paymentLinkId, status_id: invoiceSentId })
+      .update({ stripe_final_invoice_id: paymentLinkId, stripe_final_url: paymentUrl, status_id: invoiceSentId })
       .eq("id", id);
     if (updateErr) throw updateErr;
 
@@ -255,6 +259,10 @@ router.post("/appointments/:id/remind-final-invoice", isAdmin, async (req, res):
     if (!stripe) { res.status(500).json({ error: "Stripe is not configured" }); return; }
 
     const paymentLink = await stripe.paymentLinks.retrieve(appt.stripe_final_invoice_id);
+    // Backfill URL if not yet stored
+    if (!appt.stripe_final_url) {
+      await supabase.from("appointment").update({ stripe_final_url: paymentLink.url }).eq("id", id);
+    }
     const message = `Hi ${customer.first_name}, this is a reminder to complete your final payment for your Captures By Capri session: ${paymentLink.url}`;
     await notifyClient(customer, message, "Reminder: final payment due — Captures By Capri");
 
