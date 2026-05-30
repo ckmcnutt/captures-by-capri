@@ -1,0 +1,43 @@
+name: Build & Deploy
+on: push
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: supabase/functions/cal-booking-webhook
+    permissions:
+      contents: read
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@main
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@main
+        with:
+          cache: true
+          deno-verson: lts
+
+      - name: Install dependencies
+        run: deno install
+
+      - name: Verify Formatting
+        run: deno fmt --check
+
+      - name: Linter
+        run: deno lint
+
+      - name: Test
+        run: deno test --allow-all
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@main
+        with:
+          version: latest
+
+      - name: Deploy Functions
+        run: supabase functions deploy --project-ref $PROJECT_ID
