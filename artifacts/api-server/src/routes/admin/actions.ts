@@ -2,6 +2,7 @@ import { Router } from "express";
 import { supabase } from "../../lib/supabase";
 import { isAdmin } from "../../middleware/auth";
 import { sendSms } from "../../lib/twilio";
+import { sendEmail } from "../../lib/email";
 import { createDepositPaymentLink, createFinalPaymentLink, stripe } from "../../lib/stripe";
 import { declineCalBooking } from "../../lib/calcom";
 import { logger } from "../../lib/logger";

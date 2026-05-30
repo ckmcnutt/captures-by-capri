@@ -47,66 +47,79 @@ router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
 
   logger.info({ type: event.type }, "Stripe webhook received");
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const { appointmentId, invoiceType } = session.metadata ?? {};
+  async function handleDepositPaid(appointmentId: number): Promise<void> {
+    const { data: appt, error: fetchError } = await supabase
+      .from("appointment")
+      .select("id, cal_booking_uid")
+      .eq("id", appointmentId)
+      .single();
 
-    if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
-      res.json({ ok: true });
+    if (fetchError || !appt) {
+      logger.error({ err: fetchError, appointmentId }, "Appointment not found for deposit webhook");
       return;
     }
 
-    const id = parseInt(appointmentId, 10);
-    if (isNaN(id)) {
-      logger.warn({ appointmentId }, "Invalid appointmentId in Stripe metadata");
-      res.json({ ok: true });
-      return;
+    if (appt.cal_booking_uid) {
+      await confirmCalBooking(appt.cal_booking_uid);
     }
 
-    try {
-      if (invoiceType === "deposit") {
-        const { data: appt, error: fetchError } = await supabase
-          .from("appointment")
-          .select("id, cal_booking_uid")
-          .eq("id", id)
-          .single();
+    const depositPaidStatusId = await getStatusId("deposit_paid");
+    if (depositPaidStatusId) {
+      await supabase.from("appointment").update({ status_id: depositPaidStatusId }).eq("id", appointmentId);
+    }
 
-        if (fetchError || !appt) {
-          logger.error({ err: fetchError, appointmentId: id }, "Appointment not found for deposit webhook");
-          res.json({ ok: true });
-          return;
-        }
+    logger.info({ appointmentId }, "Deposit paid — status set to deposit_paid, Cal.com booking confirmed");
+  }
 
-        if (appt.cal_booking_uid) {
-          await confirmCalBooking(appt.cal_booking_uid);
-        }
+  async function handleFinalPaid(appointmentId: number): Promise<void> {
+    const invoicePaidStatusId = await getStatusId("invoice_paid");
+    if (invoicePaidStatusId) {
+      await supabase.from("appointment").update({ status_id: invoicePaidStatusId }).eq("id", appointmentId);
+    }
+    logger.info({ appointmentId }, "Final invoice paid — status set to invoice_paid");
+  }
 
-        const [confirmedStatusId, depositPaidStatusId] = await Promise.all([
-          getStatusId("appointment_confirmed"),
-          getStatusId("deposit_paid"),
-        ]);
+  function extractMetadata(metadata: Record<string, string> | null | undefined): { appointmentId: number | null; invoiceType: string | null } {
+    const { appointmentId: rawId, invoiceType = null } = metadata ?? {};
+    const appointmentId = rawId ? parseInt(rawId, 10) : null;
+    return { appointmentId: appointmentId && !isNaN(appointmentId) ? appointmentId : null, invoiceType };
+  }
 
-        if (confirmedStatusId) {
-          await supabase.from("appointment").update({ status_id: confirmedStatusId }).eq("id", id);
-        }
-        if (depositPaidStatusId) {
-          await supabase.from("appointment").update({ status_id: depositPaidStatusId }).eq("id", id);
-        }
-
-        logger.info({ appointmentId: id }, "Deposit paid — appointment confirmed and deposit_paid set");
-
-      } else if (invoiceType === "final") {
-        const invoicePaidStatusId = await getStatusId("invoice_paid");
-        if (invoicePaidStatusId) {
-          await supabase.from("appointment").update({ status_id: invoicePaidStatusId }).eq("id", id);
-        }
-        logger.info({ appointmentId: id }, "Final invoice paid — status set to invoice_paid");
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const { appointmentId, invoiceType } = extractMetadata(session.metadata);
+      if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
+        res.json({ ok: true });
+        return;
       }
-    } catch (err) {
-      logger.error({ err, appointmentId: id, invoiceType }, "Failed to process Stripe webhook");
-      res.status(500).json({ error: "Failed to process webhook" });
-      return;
+      if (invoiceType === "deposit") await handleDepositPaid(appointmentId);
+      else if (invoiceType === "final") await handleFinalPaid(appointmentId);
+
+    } else if (event.type === "invoice.paid") {
+      const invoice = event.data.object;
+      const { appointmentId, invoiceType } = extractMetadata(invoice.metadata);
+      if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
+        res.json({ ok: true });
+        return;
+      }
+      if (invoiceType === "deposit") await handleDepositPaid(appointmentId);
+      else if (invoiceType === "final") await handleFinalPaid(appointmentId);
+
+    } else if (event.type === "payment_intent.succeeded") {
+      const intent = event.data.object;
+      const { appointmentId, invoiceType } = extractMetadata(intent.metadata);
+      if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
+        res.json({ ok: true });
+        return;
+      }
+      if (invoiceType === "deposit") await handleDepositPaid(appointmentId);
+      else if (invoiceType === "final") await handleFinalPaid(appointmentId);
     }
+  } catch (err) {
+    logger.error({ err, type: event.type }, "Failed to process Stripe webhook");
+    res.status(500).json({ error: "Failed to process webhook" });
+    return;
   }
 
   res.json({ ok: true });
