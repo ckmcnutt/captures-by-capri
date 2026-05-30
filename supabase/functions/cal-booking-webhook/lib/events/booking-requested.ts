@@ -84,6 +84,76 @@ export async function processBookingRequested(
     cal_booking_uid: payload.uid ?? null,
   });
   console.debug(`Appointment ${bookingId} added successfully!`);
+
+  await sendAdminSmsAlert({
+    firstName: first_name,
+    lastName: last_name,
+    sessionType: session_type,
+    startTime: start_time,
+  });
+}
+
+async function sendAdminSmsAlert(params: {
+  firstName: string;
+  lastName: string;
+  sessionType: string;
+  startTime: string;
+}): Promise<void> {
+  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const fromNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+  const adminPhone = Deno.env.get("ADMIN_PHONE_NUMBER");
+
+  if (!accountSid || !authToken || !fromNumber || !adminPhone) {
+    console.warn("Twilio credentials not fully configured — admin SMS not sent");
+    return;
+  }
+
+  const startDate = new Date(params.startTime);
+  const formattedDate = startDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const formattedTime = startDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  const body =
+    `New booking request!\n` +
+    `Client: ${params.firstName} ${params.lastName}\n` +
+    `Session: ${params.sessionType}\n` +
+    `Date/Time: ${formattedDate} at ${formattedTime}\n` +
+    `Log in to review.`;
+
+  const url =
+    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  const credentials = btoa(`${accountSid}:${authToken}`);
+
+  const formParams = new URLSearchParams({
+    From: fromNumber,
+    To: adminPhone,
+    Body: body,
+  });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formParams.toString(),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`Twilio SMS failed (${res.status}): ${text}`);
+  } else {
+    console.debug("Admin SMS alert sent successfully via Twilio");
+  }
 }
 
 function normalizePayloadResponses(payload: CalPayload) {

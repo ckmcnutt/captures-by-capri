@@ -66,18 +66,64 @@ function StatusBadge({ statusName }: { statusName: string }) {
   );
 }
 
+function ActionButton({
+  children,
+  onClick,
+  loading,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  loading?: boolean;
+  variant?: "default" | "danger" | "secondary";
+}) {
+  const base = "inline-flex items-center justify-center px-4 py-2 text-xs tracking-widest uppercase font-medium rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+  const variants = {
+    default: "bg-white text-zinc-950 hover:bg-white/90",
+    danger: "bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30",
+    secondary: "bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-700",
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className={`${base} ${variants[variant]}`}
+    >
+      {loading ? "…" : children}
+    </button>
+  );
+}
+
 function DetailPanel({
   appt,
   onClose,
+  onAction,
 }: {
   appt: Appointment;
   onClose: () => void;
+  onAction: (type: "confirm" | "reject" | "remind") => Promise<void>;
 }) {
   const customer = appt.customer;
   const status = appt.appointment_status;
   const category = appt.category;
   const startDate = new Date(appt.start_time);
   const endDate = new Date(appt.end_time);
+  const statusName = status?.status_name ?? "";
+
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState("");
+
+  async function handleAction(type: "confirm" | "reject" | "remind") {
+    setActionLoading(type);
+    setActionError("");
+    try {
+      await onAction(type);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
@@ -104,6 +150,50 @@ function DetailPanel({
               {category?.category_name ?? "—"}
             </span>
           </div>
+
+          {actionError && (
+            <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+              {actionError}
+            </div>
+          )}
+
+          {statusName === "appointment_requested" && (
+            <section>
+              <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">
+                Actions
+              </h3>
+              <div className="flex gap-3">
+                <ActionButton
+                  onClick={() => handleAction("confirm")}
+                  loading={actionLoading === "confirm"}
+                >
+                  Confirm
+                </ActionButton>
+                <ActionButton
+                  variant="danger"
+                  onClick={() => handleAction("reject")}
+                  loading={actionLoading === "reject"}
+                >
+                  Reject
+                </ActionButton>
+              </div>
+            </section>
+          )}
+
+          {statusName === "deposit_requested" && (
+            <section>
+              <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">
+                Actions
+              </h3>
+              <ActionButton
+                variant="secondary"
+                onClick={() => handleAction("remind")}
+                loading={actionLoading === "remind"}
+              >
+                Send Deposit Reminder
+              </ActionButton>
+            </section>
+          )}
 
           <section>
             <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">
@@ -194,11 +284,15 @@ function DetailPanel({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Deposit invoice</span>
-                <span>{appt.stripe_deposit_invoice_id ?? "—"}</span>
+                <span className="font-mono text-xs truncate max-w-[12rem]">
+                  {appt.stripe_deposit_invoice_id ?? "—"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Final invoice</span>
-                <span>{appt.stripe_final_invoice_id ?? "—"}</span>
+                <span className="font-mono text-xs truncate max-w-[12rem]">
+                  {appt.stripe_final_invoice_id ?? "—"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Final amount</span>
@@ -282,22 +376,50 @@ export default function AdminDashboard() {
         return;
       }
       if (!res.ok) throw new Error("Failed to load appointments");
-      const data = await res.json();
+      const data = (await res.json()) as Appointment[];
       setAppointments(data);
+      if (selected) {
+        const updated = data.find((a) => a.id === selected.id);
+        setSelected(updated ?? null);
+      }
     } catch {
       setError("Could not load appointments.");
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, navigate]);
+  }, [statusFilter, navigate, selected]);
 
   useEffect(() => {
     fetchAppointments();
-  }, [fetchAppointments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
     navigate("/admin/login");
+  }
+
+  async function handleAction(type: "confirm" | "reject" | "remind") {
+    if (!selected) return;
+    const endpoint =
+      type === "confirm"
+        ? `/api/admin/appointments/${selected.id}/confirm`
+        : type === "reject"
+          ? `/api/admin/appointments/${selected.id}/reject`
+          : `/api/admin/appointments/${selected.id}/remind-deposit`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(body.error ?? `Request failed (${res.status})`);
+    }
+
+    await fetchAppointments();
   }
 
   return (
@@ -393,7 +515,11 @@ export default function AdminDashboard() {
       )}
 
       {selected && (
-        <DetailPanel appt={selected} onClose={() => setSelected(null)} />
+        <DetailPanel
+          appt={selected}
+          onClose={() => setSelected(null)}
+          onAction={handleAction}
+        />
       )}
     </AdminLayout>
   );
