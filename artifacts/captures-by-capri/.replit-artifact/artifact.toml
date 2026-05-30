@@ -29,3 +29,14 @@ to = "/index.html"
 [services.env]
 PORT = "24316"
 BASE_PATH = "/"
+
+[[services]]
+name = "api"
+paths = [ "/api" ]
+localPort = 3000
+
+[services.development]
+run = "pnpm --filter @workspace/api-server run dev"
+
+[services.env]
+PORT = "3000"

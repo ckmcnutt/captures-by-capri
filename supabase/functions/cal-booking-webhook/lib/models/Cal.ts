@@ -1,5 +1,6 @@
 export type CalPayload = {
   bookingId?: number;
+  uid?: string;
   startTime?: string;
   endTime?: string;
   attendees?: Array<{

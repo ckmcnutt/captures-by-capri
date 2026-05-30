@@ -6,11 +6,17 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Portfolio from "@/pages/portfolio";
 import Book from "@/pages/book";
+import AdminLogin from "@/pages/admin/login";
+import AdminDashboard from "@/pages/admin/dashboard";
 import { Layout } from "@/components/layout";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin">
+        <AdminDashboard />
+      </Route>
       <Route path="/">
         <Layout><Home /></Layout>
       </Route>

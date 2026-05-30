@@ -60,6 +60,16 @@ export async function processBookingRequested(
   );
   console.debug(`Category ${category?.category_name} found!`);
 
+  console.debug(`Looking up appointment_requested status...`);
+  const { data: statusRows, error: statusError } = await ctx.supabase
+    .from("appointment_status")
+    .select("id")
+    .eq("status_name", "appointment_requested")
+    .limit(1);
+  if (statusError) throw statusError;
+  const status_id = statusRows?.[0]?.id ?? null;
+  console.debug(`appointment_requested status_id: ${status_id}`);
+
   console.debug(`Adding new appointment ${bookingId}...`);
   const apptService = new AppointmentService(ctx);
   await apptService.insertAppointment({
@@ -70,6 +80,8 @@ export async function processBookingRequested(
     aesthetic,
     customer_notes,
     customer_id,
+    status_id,
+    cal_booking_uid: payload.uid ?? null,
   });
   console.debug(`Appointment ${bookingId} added successfully!`);
 }
