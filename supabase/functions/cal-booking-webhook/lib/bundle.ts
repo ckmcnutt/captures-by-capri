@@ -36,8 +36,8 @@ class AppointmentService {
     if (error) throw error;
     return data[0].id;
   }
-  async updateStatus(id: number, status_id: number, notes: string) {
-    const { error } = await this.ctx.supabase.from("appointment").update({ status_id, internal_notes: notes }).eq("id", id);
+  async updateStatusByCalUid(uid: string, status_id: number, notes: string) {
+    const { error } = await this.ctx.supabase.from("appointment").update({ status_id, internal_notes: notes }).eq("cal_booking_uid", uid);
     if (error) throw error;
   }
 }
@@ -85,29 +85,48 @@ export async function processWebhookEvent(msg: CalEventMessage, ctx: SupabaseCon
   const trig = normString(msg.triggerEvent) ?? "";
   const p = msg.payload;
   if (!p) throw new APIError("Missing payload", 400);
-  if (!p.bookingId) throw new APIError("Missing bookingId", 400);
+  const uid = normString(p.uid ?? null);
   const apptSvc = new AppointmentService(ctx);
+
   if (trig === WebhookEvent.BOOKING_CANCELED) {
-    await apptSvc.updateStatus(p.bookingId, 2, "CANCELED: " + p.cancellationReason);
+    if (!uid) throw new APIError("Missing uid", 400);
+    await apptSvc.updateStatusByCalUid(uid, 2, "CANCELED: " + (p.cancellationReason ?? ""));
   } else if (trig === WebhookEvent.BOOKING_REJECTED) {
-    await apptSvc.updateStatus(p.bookingId, 12, "REJECTED: " + p.rejectionReason);
+    if (!uid) throw new APIError("Missing uid", 400);
+    await apptSvc.updateStatusByCalUid(uid, 12, "REJECTED: " + (p.rejectionReason ?? ""));
   } else if (trig === WebhookEvent.BOOKING_REQUESTED) {
     const r = p.responses;
     if (!r) throw new APIError("No responses", 400);
     const missing: string[] = [];
     const g = (k: string) => { const v = r[k]?.value as string; if (!v) missing.push(k); return v ?? ""; };
-    const nameVal = r["name"]?.value as Record<string, string> | undefined;
-    const first_name = nameVal?.first_name ?? (missing.push("firstName"), "");
-    const last_name = nameVal?.last_name ?? (missing.push("lastName"), "");
+
+    // Name: Cal.com sends either a plain string "First Last" or an object {first_name, last_name}
+    const rawName = r["name"]?.value;
+    let first_name: string, last_name: string;
+    if (rawName && typeof rawName === "object") {
+      const obj = rawName as Record<string, string>;
+      first_name = normString(obj.first_name ?? obj.firstName ?? null) ?? "";
+      last_name = normString(obj.last_name ?? obj.lastName ?? null) ?? "";
+    } else if (typeof rawName === "string") {
+      const parts = rawName.trim().split(/\s+/);
+      first_name = parts[0] ?? "";
+      last_name = parts.slice(1).join(" ");
+    } else {
+      first_name = "";
+      last_name = "";
+    }
+    if (!first_name) missing.push("firstName");
+
     const email_address = g("email");
-    const phone_number = g("attendeePhoneNumber");
-    const preferred_contact_method = g("contact_method");
+    const phone_number = normString(r["attendeePhoneNumber"]?.value as string ?? r["phone"]?.value as string ?? null) ?? "";
+    const preferred_contact_method = normString(r["contact_method"]?.value as string ?? null) ?? "email";
     const aesthetic = g("aesthetic");
     const session_type = g("session_type");
-    const customer_notes = r["notes"]?.value as string;
+    const customer_notes = r["notes"]?.value as string ?? null;
     const start_time = p.startTime ?? (missing.push("startTime"), "");
     const end_time = p.endTime ?? (missing.push("endTime"), "");
     if (missing.length) throw new APIError("Missing: " + missing.join(","), 400);
+
     const custSvc = new CustomerService(ctx);
     const existing = await custSvc.getByEmail(email_address);
     const customer_id = existing?.id ?? await custSvc.insert({ first_name, last_name, email_address, phone_number, preferred_contact_method });
@@ -116,7 +135,10 @@ export async function processWebhookEvent(msg: CalEventMessage, ctx: SupabaseCon
     const { data: sr, error: se } = await ctx.supabase.from("appointment_status").select("id").eq("status_name", "appointment_requested").limit(1);
     if (se) throw se;
     const status_id = (sr as {id: number}[])?.[0]?.id ?? null;
-    await apptSvc.insert({ id: p.bookingId, start_time, end_time, category_id: cat?.id as number, aesthetic, customer_notes, customer_id, status_id, cal_booking_uid: p.uid ?? null });
+    // Use Cal.com bookingId as PK when present; otherwise DB auto-generates
+    const insertPayload: Appointment = { start_time, end_time, category_id: cat?.id as number, aesthetic, customer_notes, customer_id, status_id, cal_booking_uid: uid };
+    if (p.bookingId) insertPayload.id = p.bookingId;
+    await apptSvc.insert(insertPayload);
     await sendAdminSms(first_name, last_name, session_type, start_time);
   }
 }
