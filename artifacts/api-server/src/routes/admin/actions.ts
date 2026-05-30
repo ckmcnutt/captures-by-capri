@@ -53,16 +53,14 @@ function getStatusName(appt: Awaited<ReturnType<typeof getAppointmentWithCustome
 }
 
 async function notifyClient(
-  customer: { phone_number: string; email_address: string; preferred_contact_method: string },
-  message: string
+  customer: { phone_number: string; email_address: string; preferred_contact_method: string; first_name: string },
+  message: string,
+  subject: string = "Update from Captures By Capri"
 ): Promise<void> {
   if (customer.preferred_contact_method === "sms") {
     await sendSms(customer.phone_number, message);
   } else {
-    logger.info(
-      { email: customer.email_address, message },
-      "Email notification (email service not yet configured — logged only)"
-    );
+    await sendEmail(customer.email_address, subject, message);
   }
 }
 
@@ -92,7 +90,7 @@ router.post("/appointments/:id/confirm", isAdmin, async (req, res): Promise<void
     if (updateError) throw updateError;
 
     const message = `Hi ${customer.first_name}! Your photography session request with Captures By Capri has been reviewed. Complete your $20 deposit here: ${paymentUrl}`;
-    await notifyClient(customer, message);
+    await notifyClient(customer, message, "Your session is confirmed — complete your deposit");
 
     req.log.info({ appointmentId: id }, "Appointment confirmed — deposit requested");
     res.json({ ok: true, paymentUrl });
@@ -129,7 +127,7 @@ router.post("/appointments/:id/reject", isAdmin, async (req, res): Promise<void>
 
     if (customer) {
       const message = `Hi ${customer.first_name}, we regret that your photography session request with Captures By Capri could not be accommodated. Please feel free to reach out to book a new time.`;
-      await notifyClient(customer, message);
+      await notifyClient(customer, message, "Your session request from Captures By Capri");
     }
 
     req.log.info({ appointmentId: id }, "Appointment rejected");
@@ -161,7 +159,7 @@ router.post("/appointments/:id/remind-deposit", isAdmin, async (req, res): Promi
 
     const paymentLink = await stripe.paymentLinks.retrieve(appt.stripe_deposit_invoice_id);
     const message = `Hi ${customer.first_name}, this is a reminder to complete your $20 deposit with Captures By Capri: ${paymentLink.url}`;
-    await notifyClient(customer, message);
+    await notifyClient(customer, message, "Reminder: complete your deposit — Captures By Capri");
 
     req.log.info({ appointmentId: id }, "Deposit reminder sent");
     res.json({ ok: true, paymentUrl: paymentLink.url });
@@ -227,7 +225,7 @@ router.post("/appointments/:id/send-final-invoice", isAdmin, async (req, res): P
     if (updateErr) throw updateErr;
 
     const message = `Hi ${customer.first_name}! Your final invoice of $${appt.final_invoice_amount.toFixed(2)} for your photography session with Captures By Capri is ready: ${paymentUrl}`;
-    await notifyClient(customer, message);
+    await notifyClient(customer, message, "Your final invoice from Captures By Capri");
 
     req.log.info({ appointmentId: id }, "Final invoice sent");
     res.json({ ok: true, paymentUrl });
@@ -258,7 +256,7 @@ router.post("/appointments/:id/remind-final-invoice", isAdmin, async (req, res):
 
     const paymentLink = await stripe.paymentLinks.retrieve(appt.stripe_final_invoice_id);
     const message = `Hi ${customer.first_name}, this is a reminder to complete your final payment for your Captures By Capri session: ${paymentLink.url}`;
-    await notifyClient(customer, message);
+    await notifyClient(customer, message, "Reminder: final payment due — Captures By Capri");
 
     req.log.info({ appointmentId: id }, "Final invoice reminder sent");
     res.json({ ok: true, paymentUrl: paymentLink.url });
@@ -326,7 +324,7 @@ router.post("/appointments/:id/send-photo-link", isAdmin, async (req, res): Prom
     if (updateErr) throw updateErr;
 
     const message = `Hi ${customer.first_name}! Your photos from your session with Captures By Capri are ready. View and download here: ${photoUrl.trim()}`;
-    await notifyClient(customer, message);
+    await notifyClient(customer, message, "Your photos are ready — Captures By Capri");
 
     req.log.info({ appointmentId: id }, "Photo link sent");
     res.json({ ok: true });
