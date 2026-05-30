@@ -26,7 +26,8 @@ export async function sendEmail(to: string, subject: string, text: string): Prom
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Resend API error ${res.status}: ${body}`);
+    logger.warn({ to, subject, status: res.status, body }, "Resend email failed — notification not delivered");
+    return;
   }
 
   logger.info({ to, subject }, "Email sent via Resend");
