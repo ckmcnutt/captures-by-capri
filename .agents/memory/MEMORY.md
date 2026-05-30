@@ -1,0 +1,1 @@
+- [Supabase project details](supabase-project.md) — project ID, correct API URL, and migration history for captures-by-capri
