@@ -17,6 +17,7 @@ export async function processBookingRequested(
     last_name,
     email_address,
     phone_number,
+    preferred_contact_method,
     start_time,
     end_time,
     aesthetic,
@@ -44,7 +45,7 @@ export async function processBookingRequested(
       last_name,
       email_address,
       phone_number,
-      // preferred_contact_method: responses.choice.value as string,
+      preferred_contact_method
     });
     console.debug(`New customer ${email_address} added successfully!`);
   }
@@ -90,6 +91,9 @@ function normalizePayloadResponses(payload: CalPayload) {
   const phone_number = responses.attendeePhoneNumber.value
     ? responses.attendeePhoneNumber.value as string
     : missing.push("attendeePhoneNumber");
+  const preferred_contact_method = responses.contact_method.value
+    ? responses.contact_method.value as string
+    : missing.push("contact_method");
   const start_time = payload.startTime ?? missing.push("startTime");
   const end_time = payload.endTime ?? missing.push("startTime");
   const aesthetic = responses.aesthetic.value
@@ -112,6 +116,7 @@ function normalizePayloadResponses(payload: CalPayload) {
     last_name: last_name as string,
     email_address: email_address as string,
     phone_number: phone_number as string,
+    preferred_contact_method: preferred_contact_method as string,
     start_time: start_time as string,
     end_time: end_time as string,
     aesthetic: aesthetic as string,
