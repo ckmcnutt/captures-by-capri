@@ -90,20 +90,25 @@ router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
     return { appointmentId: appointmentId && !isNaN(appointmentId) ? appointmentId : null, invoiceType };
   }
 
+  async function resolveByPaymentLink(paymentLinkId: string | null | undefined): Promise<{ appointmentId: number; invoiceType: "deposit" | "final" } | null> {
+    if (!paymentLinkId) return null;
+    const { data } = await supabase
+      .from("appointment")
+      .select("id, stripe_deposit_invoice_id, stripe_final_invoice_id")
+      .or(`stripe_deposit_invoice_id.eq.${paymentLinkId},stripe_final_invoice_id.eq.${paymentLinkId}`)
+      .limit(1)
+      .single();
+    if (!data) return null;
+    const invoiceType = data.stripe_deposit_invoice_id === paymentLinkId ? "deposit" : "final";
+    return { appointmentId: data.id, invoiceType };
+  }
+
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      const { appointmentId, invoiceType } = extractMetadata(session.metadata);
-      if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
-        res.json({ ok: true });
-        return;
-      }
-      if (invoiceType === "deposit") await handleDepositPaid(appointmentId);
-      else if (invoiceType === "final") await handleFinalPaid(appointmentId);
-
-    } else if (event.type === "invoice.paid") {
-      const invoice = event.data.object;
-      const { appointmentId, invoiceType } = extractMetadata(invoice.metadata);
+      // Primary: look up by payment_link ID (reliable for payment links)
+      const byLink = await resolveByPaymentLink(session.payment_link as string | null);
+      const { appointmentId, invoiceType } = byLink ?? extractMetadata(session.metadata);
       if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
         res.json({ ok: true });
         return;
