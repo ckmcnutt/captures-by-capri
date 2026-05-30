@@ -28,8 +28,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
-          <Link href="/" className="font-serif text-2xl tracking-widest uppercase z-50 relative">
-            Capri
+          <Link href="/" className="z-50 relative">
+            <img src="/logo.png" alt="Captures by Capri" className="h-20 w-auto brightness-0 invert" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide uppercase">
