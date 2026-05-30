@@ -6,6 +6,16 @@ import { logger } from "../../lib/logger";
 
 const router = Router();
 
+async function getStatusId(statusName: string): Promise<number | null> {
+  const { data } = await supabase
+    .from("appointment_status")
+    .select("id")
+    .eq("status_name", statusName)
+    .limit(1)
+    .single();
+  return data?.id ?? null;
+}
+
 router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -41,7 +51,7 @@ router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
     const session = event.data.object;
     const { appointmentId, invoiceType } = session.metadata ?? {};
 
-    if (invoiceType !== "deposit" || !appointmentId) {
+    if (!appointmentId || (invoiceType !== "deposit" && invoiceType !== "final")) {
       res.json({ ok: true });
       return;
     }
@@ -54,54 +64,46 @@ router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
     }
 
     try {
-      const { data: appt, error: fetchError } = await supabase
-        .from("appointment")
-        .select("id, cal_booking_uid")
-        .eq("id", id)
-        .single();
-
-      if (fetchError || !appt) {
-        logger.error({ err: fetchError, appointmentId: id }, "Appointment not found for Stripe webhook");
-        res.json({ ok: true });
-        return;
-      }
-
-      if (appt.cal_booking_uid) {
-        await confirmCalBooking(appt.cal_booking_uid);
-      }
-
-      const [confirmedStatus, depositPaidStatus] = await Promise.all([
-        supabase
-          .from("appointment_status")
-          .select("id")
-          .eq("status_name", "appointment_confirmed")
-          .limit(1)
-          .single(),
-        supabase
-          .from("appointment_status")
-          .select("id")
-          .eq("status_name", "deposit_paid")
-          .limit(1)
-          .single(),
-      ]);
-
-      if (confirmedStatus.data) {
-        await supabase
+      if (invoiceType === "deposit") {
+        const { data: appt, error: fetchError } = await supabase
           .from("appointment")
-          .update({ status_id: confirmedStatus.data.id })
-          .eq("id", id);
-      }
+          .select("id, cal_booking_uid")
+          .eq("id", id)
+          .single();
 
-      if (depositPaidStatus.data) {
-        await supabase
-          .from("appointment")
-          .update({ status_id: depositPaidStatus.data.id })
-          .eq("id", id);
-      }
+        if (fetchError || !appt) {
+          logger.error({ err: fetchError, appointmentId: id }, "Appointment not found for deposit webhook");
+          res.json({ ok: true });
+          return;
+        }
 
-      logger.info({ appointmentId: id }, "Deposit paid — appointment confirmed and deposit_paid status set");
+        if (appt.cal_booking_uid) {
+          await confirmCalBooking(appt.cal_booking_uid);
+        }
+
+        const [confirmedStatusId, depositPaidStatusId] = await Promise.all([
+          getStatusId("appointment_confirmed"),
+          getStatusId("deposit_paid"),
+        ]);
+
+        if (confirmedStatusId) {
+          await supabase.from("appointment").update({ status_id: confirmedStatusId }).eq("id", id);
+        }
+        if (depositPaidStatusId) {
+          await supabase.from("appointment").update({ status_id: depositPaidStatusId }).eq("id", id);
+        }
+
+        logger.info({ appointmentId: id }, "Deposit paid — appointment confirmed and deposit_paid set");
+
+      } else if (invoiceType === "final") {
+        const invoicePaidStatusId = await getStatusId("invoice_paid");
+        if (invoicePaidStatusId) {
+          await supabase.from("appointment").update({ status_id: invoicePaidStatusId }).eq("id", id);
+        }
+        logger.info({ appointmentId: id }, "Final invoice paid — status set to invoice_paid");
+      }
     } catch (err) {
-      logger.error({ err, appointmentId: id }, "Failed to process deposit payment webhook");
+      logger.error({ err, appointmentId: id, invoiceType }, "Failed to process Stripe webhook");
       res.status(500).json({ error: "Failed to process webhook" });
       return;
     }
