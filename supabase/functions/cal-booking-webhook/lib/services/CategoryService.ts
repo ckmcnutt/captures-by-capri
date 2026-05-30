@@ -12,9 +12,19 @@ export class CategoryService {
     const { error, data } = await this.ctx.supabase
       .from("category")
       .select()
-      .eq("category_name", categoryName);
+      .ilike("category_name", `%${categoryName}%`);
 
     if (error) throw error;
+    console.log(data);
     return data[0] ?? null;
   }
+
+  public async listCategories(): Promise<Category[] | null> {
+    const { error, data } = await this.ctx.supabase
+      .from("category")
+      .select();
+
+    if (error) throw error;
+    return data;
+  } 
 }

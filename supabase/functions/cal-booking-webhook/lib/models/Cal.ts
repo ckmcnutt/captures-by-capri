@@ -8,8 +8,11 @@ export type CalPayload = {
     email?: string;
     phoneNumber?: string;
   }>;
-  responses?: Record<string, { value?: unknown }>;
+  // deno-lint-ignore no-explicit-any
+  responses?: Record<string, { value?: any }>;
   userFieldsResponses?: Record<string, { value?: unknown }>;
+  cancellationReason?: string;
+  rejectionReason?: string;
 };
 
 export type CalEventMessage = {

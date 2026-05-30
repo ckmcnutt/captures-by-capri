@@ -16,35 +16,38 @@ export type Database = {
     Tables: {
       appointment: {
         Row: {
-          additional_notes: string | null
           aesthetic: string
           category_id: number
           created_at: string
           customer_id: number | null
+          customer_notes: string | null
           end_time: string
           id: number
+          internal_notes: string | null
           start_time: string
           status_id: number | null
         }
         Insert: {
-          additional_notes?: string | null
           aesthetic: string
           category_id?: number
           created_at?: string
           customer_id?: number | null
+          customer_notes?: string | null
           end_time: string
           id?: number
+          internal_notes?: string | null
           start_time: string
           status_id?: number | null
         }
         Update: {
-          additional_notes?: string | null
           aesthetic?: string
           category_id?: number
           created_at?: string
           customer_id?: number | null
+          customer_notes?: string | null
           end_time?: string
           id?: number
+          internal_notes?: string | null
           start_time?: string
           status_id?: number | null
         }

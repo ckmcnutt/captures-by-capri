@@ -8,12 +8,25 @@ export class AppointmentService {
     this.ctx = ctx;
   }
 
-  public async insertAppointment(appt: Appointment) {
+  public async insertAppointment(appointment: Appointment): Promise<number> {
     const { error, data } = await this.ctx.supabase.from("appointment").insert(
-      appt,
+      appointment,
     ).select();
 
     if (error) throw error;
     return data[0].id;
+  }
+
+  public async updateAppointmentStatus(
+    appointmentId: number,
+    status_id: number,
+    internal_notes: string
+  ) {
+    const { error } = await this.ctx.supabase
+      .from("appointment")
+      .update({ status_id, internal_notes })
+      .eq("id", appointmentId);
+
+    if (error) throw error;
   }
 }

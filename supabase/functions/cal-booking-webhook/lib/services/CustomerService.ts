@@ -17,12 +17,11 @@ export class CustomerService {
     return data[0].id;
   }
 
-  public async getCustomerByName(firstName: string, lastName: string): Promise<Customer | null> {
+  public async getCustomerByEmail(email: string): Promise<Customer | null> {
     const { data, error } = await this.ctx.supabase
     .from("customer")
     .select()
-    .eq("first_name", firstName)
-    .eq("last_name", lastName);
+    .eq("email_address", email);
 
     if (error) throw error;
     return data[0] ?? null;

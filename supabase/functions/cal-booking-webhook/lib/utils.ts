@@ -1,4 +1,4 @@
-import { headers } from "./config.ts";
+export const headers = { "Content-Type": "application/json" };
 
 export function jsonError(message: string, status = 400) {
   return new Response(JSON.stringify({ error: message }), {
