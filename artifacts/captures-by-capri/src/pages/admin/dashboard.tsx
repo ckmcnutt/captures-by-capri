@@ -233,7 +233,7 @@ function DetailPanel({
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               {status && <StatusBadge statusName={status.status_name} />}
-              <span className="text-muted-foreground text-sm">{category?.category_name ?? "—"}</span>
+              <span className="text-muted-foreground text-sm">{category?.category_desc ?? "—"}</span>
             </div>
             <StatusTimeline statusName={statusName} />
           </div>
@@ -642,7 +642,7 @@ export default function AdminDashboard() {
                       {customer ? <span>{customer.first_name} {customer.last_name}</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="px-4 py-4 text-muted-foreground hidden md:table-cell">
-                      {appt.category?.category_name ?? "—"}
+                      {appt.category?.category_desc ?? "—"}
                     </td>
                     <td className="px-4 py-4 text-muted-foreground hidden lg:table-cell">
                       {format(startDate, "MMM d, yyyy 'at' h:mm a")}
