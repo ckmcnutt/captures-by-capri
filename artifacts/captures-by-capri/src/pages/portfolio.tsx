@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { staticImages } from "@/lib/static-images";
+import { toThumbnailUrl } from "@/lib/utils";
 
 export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -70,7 +71,7 @@ export default function Portfolio() {
                 onClick={() => setLightboxImage(image.url)}
               >
                 <img
-                  src={image.url}
+                  src={toThumbnailUrl(image.url, 600, 75)}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </motion.div>
