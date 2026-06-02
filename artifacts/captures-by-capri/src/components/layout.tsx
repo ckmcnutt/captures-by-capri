@@ -23,11 +23,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-transparent overflow-visible ${
-          isScrolled ? "bg-background/80 backdrop-blur-md border-border/50 py-1" : "bg-transparent py-1.5"
+        className={`fixed top-0 left-0 right-0 z-50 h-10 overflow-visible transition-all duration-500 border-b border-transparent ${
+          isScrolled ? "bg-background/80 backdrop-blur-md border-border/50" : "bg-transparent"
         }`}
       >
-        <div className="container mx-auto px-6 md:px-12 flex items-center justify-between overflow-visible">
+        <div className="container mx-auto px-6 md:px-12 h-full flex items-center justify-between overflow-visible">
           <Link href="/" className="z-50 relative">
             <img src="/logo.png" alt="Captures by Capri" className="h-28 w-auto brightness-0 invert drop-shadow-lg" />
           </Link>
