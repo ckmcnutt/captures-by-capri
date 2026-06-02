@@ -1,5 +1,8 @@
-name: Build & Deploy
-on: push
+name: Build & Deploy Supabase Functions
+on: 
+  push:
+    paths:
+      - supabase/**
 
 jobs:
   deploy:
