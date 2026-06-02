@@ -62,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col pt-24 md:pt-0">
+      <main className="flex-1 flex flex-col">
         {children}
       </main>
 
