@@ -23,13 +23,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-transparent ${
-          isScrolled ? "bg-background/80 backdrop-blur-md border-border/50 py-0" : "bg-transparent py-0"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-transparent h-16 overflow-visible ${
+          isScrolled ? "bg-background/80 backdrop-blur-md border-border/50" : "bg-transparent"
         }`}
       >
-        <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
-          <Link href="/" className="z-50 relative">
-            <img src="/logo.png" alt="Captures by Capri" className="h-24 w-auto brightness-0 invert" />
+        <div className="container mx-auto px-6 md:px-12 flex items-center justify-between h-full overflow-visible">
+          <Link href="/" className="z-50 relative overflow-visible">
+            <img src="/logo.png" alt="Captures by Capri" className="h-40 w-auto brightness-0 invert" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide uppercase">
@@ -62,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col pt-24 md:pt-0">
+      <main className="flex-1 flex flex-col pt-16 md:pt-0">
         {children}
       </main>
 
