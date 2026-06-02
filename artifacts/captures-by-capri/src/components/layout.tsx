@@ -24,7 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-transparent ${
-          isScrolled ? "bg-background/80 backdrop-blur-md border-border/50 py-3" : "bg-transparent py-4"
+          isScrolled ? "bg-background/80 backdrop-blur-md border-border/50 py-1" : "bg-transparent py-1"
         }`}
       >
         <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
@@ -62,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col pt-28 md:pt-0">
+      <main className="flex-1 flex flex-col pt-24 md:pt-0">
         {children}
       </main>
 
