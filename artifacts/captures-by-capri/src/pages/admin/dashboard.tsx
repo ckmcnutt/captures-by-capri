@@ -233,7 +233,6 @@ function DetailPanel({
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               {status && <StatusBadge statusName={status.status_name} />}
-              <span className="text-muted-foreground text-sm">{category?.category_desc ?? "—"}</span>
             </div>
             <StatusTimeline statusName={statusName} />
           </div>
@@ -398,6 +397,10 @@ function DetailPanel({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Aesthetic</span>
                 <span className="text-right max-w-xs">{appt.aesthetic}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Session Type</span>
+                <span className="text-right max-w-xs">{appt.category?.category_desc}</span>
               </div>
             </div>
           </section>
