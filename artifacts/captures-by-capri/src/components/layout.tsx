@@ -27,19 +27,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
           isScrolled ? "bg-background/80 backdrop-blur-md border-border/50" : "bg-transparent"
         }`}
       >
-        <div className="container mx-auto px-6 md:px-12 h-full flex items-center justify-between overflow-visible">
+        <div className="container mx-auto px-6 md:px-12 h-full flex items-start justify-between overflow-visible">
           <Link href="/" className="z-50 relative">
             <img src="/logo.png" alt="Captures by Capri" className="h-28 w-auto brightness-0 invert drop-shadow-lg" />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide uppercase">
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide uppercase self-center">
             <Link href="/" className="hover:text-primary/70 transition-colors">Home</Link>
             <Link href="/portfolio" className="hover:text-primary/70 transition-colors">Portfolio</Link>
             <Link href="/book" className="hover:text-primary/70 transition-colors">Book</Link>
           </nav>
 
           <button 
-            className="md:hidden z-50 relative p-2"
+            className="md:hidden z-50 relative p-2 self-center"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
