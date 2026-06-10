@@ -555,7 +555,7 @@ export default function AdminDashboard() {
     try {
       const url = statusFilter
         ? `/api/admin/appointments?status=${encodeURIComponent(statusFilter)}`
-        : "/api/admin/appointments";
+        : "/api/admin/appointments?status=appointment_requested&status=deposit_requested&status=invoice_sent&status=deposit_paid&status=invoice_paid&status=editing_photos";
       const res = await fetch(url, { credentials: "include" });
       if (res.status === 401) { navigate("/admin/login"); return; }
       if (!res.ok) throw new Error("Failed to load appointments");
