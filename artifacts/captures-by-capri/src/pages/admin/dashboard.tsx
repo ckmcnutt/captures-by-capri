@@ -60,7 +60,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const TIMELINE_STEPS = [
   { key: "appointment_requested", label: "Requested" },
-  { key: "deposit_requested", label: "Deposit sent" },
+  { key: "deposit_requested", label: "Deposit requested" },
   { key: "deposit_paid", label: "Deposit paid" },
   { key: "invoice_sent", label: "Invoice sent" },
   { key: "invoice_paid", label: "Invoice paid" },
@@ -528,7 +528,6 @@ function DetailPanel({
 
 const ALL_STATUSES = [
   "appointment_requested",
-  "appointment_confirmed",
   "appointment_canceled",
   "appointment_rejected",
   "deposit_requested",
@@ -537,7 +536,6 @@ const ALL_STATUSES = [
   "invoice_paid",
   "editing_photos",
   "photos_released",
-  "appointment_complete",
 ];
 
 export default function AdminDashboard() {
@@ -606,7 +604,7 @@ export default function AdminDashboard() {
           <option value="">Active (default)</option>
           <option value="all">All statuses</option>
           {ALL_STATUSES.map((s) => (
-            <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+            <option key={s} value={s}>{s.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}</option>
           ))}
         </select>
       </div>
