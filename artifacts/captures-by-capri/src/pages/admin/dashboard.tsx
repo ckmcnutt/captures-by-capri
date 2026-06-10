@@ -553,9 +553,11 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const url = statusFilter
-        ? `/api/admin/appointments?status=${encodeURIComponent(statusFilter)}`
-        : "/api/admin/appointments?status=appointment_requested&status=deposit_requested&status=invoice_sent&status=deposit_paid&status=invoice_paid&status=editing_photos";
+      const url = statusFilter === "all"
+        ? "/api/admin/appointments"
+        : statusFilter
+          ? `/api/admin/appointments?status=${encodeURIComponent(statusFilter)}`
+          : "/api/admin/appointments?status=appointment_requested&status=deposit_requested&status=deposit_paid&status=invoice_sent&status=invoice_paid&status=editing_photos";
       const res = await fetch(url, { credentials: "include" });
       if (res.status === 401) { navigate("/admin/login"); return; }
       if (!res.ok) throw new Error("Failed to load appointments");
@@ -601,7 +603,8 @@ export default function AdminDashboard() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-transparent border border-border/50 rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:border-foreground/50 transition-colors"
         >
-          <option value="">All statuses</option>
+          <option value="">Active (default)</option>
+          <option value="all">All statuses</option>
           {ALL_STATUSES.map((s) => (
             <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
           ))}
