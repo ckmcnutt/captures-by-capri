@@ -5,9 +5,12 @@ import { isAdmin } from "../../middleware/auth";
 const router = Router();
 
 router.get("/appointments", isAdmin, async (req, res): Promise<void> => {
-  const statusFilter = Array.isArray(req.query.status)
-    ? req.query.status[0]
-    : req.query.status;
+  const rawStatus = req.query.status;
+  const statusNames: string[] = Array.isArray(rawStatus)
+    ? (rawStatus as string[]).filter((s) => typeof s === "string")
+    : typeof rawStatus === "string"
+    ? [rawStatus]
+    : [];
 
   let query = supabase
     .from("appointment")
@@ -22,15 +25,13 @@ router.get("/appointments", isAdmin, async (req, res): Promise<void> => {
     )
     .order("start_time", { ascending: false });
 
-  if (statusFilter && typeof statusFilter === "string") {
-    const { data: statusRow } = await supabase
+  if (statusNames.length > 0) {
+    const { data: statusRows } = await supabase
       .from("appointment_status")
       .select("id")
-      .eq("status_name", statusFilter)
-      .limit(1)
-      .single();
-    if (statusRow) {
-      query = query.eq("status_id", statusRow.id);
+      .in("status_name", statusNames);
+    if (statusRows && statusRows.length > 0) {
+      query = query.in("status_id", statusRows.map((r) => r.id));
     }
   }
 
