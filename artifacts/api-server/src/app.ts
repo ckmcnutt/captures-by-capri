@@ -1,5 +1,4 @@
 import express from "express";
-import session from "express-session";
 import pinoHttp from "pino-http";
 import { logger } from "./lib/logger";
 import router from "./routes/index";
@@ -34,20 +33,6 @@ app.use(
 
 app.use("/api/webhooks/stripe", express.raw({ type: "application/json" }));
 app.use(express.json());
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET ?? "dev-secret-change-me",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: isProduction,
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "lax",
-    },
-  })
-);
 
 app.use("/api", router);
 

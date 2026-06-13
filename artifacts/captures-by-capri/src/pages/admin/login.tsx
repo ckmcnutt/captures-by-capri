@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminLogin() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,18 +15,15 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ password }),
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      if (res.ok) {
-        navigate("/admin");
+      if (authError) {
+        setError(authError.message);
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Invalid password");
+        navigate("/admin");
       }
     } catch {
       setError("Network error. Please try again.");
@@ -50,6 +49,25 @@ export default function AdminLogin() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
+              htmlFor="email"
+              className="block text-xs tracking-widest uppercase text-muted-foreground mb-2"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+              className="w-full bg-transparent border border-border rounded px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground/50 transition-colors"
+              placeholder="admin@example.com"
+            />
+          </div>
+
+          <div>
+            <label
               htmlFor="password"
               className="block text-xs tracking-widest uppercase text-muted-foreground mb-2"
             >
@@ -61,9 +79,8 @@ export default function AdminLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              autoFocus
               className="w-full bg-transparent border border-border rounded px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground/50 transition-colors"
-              placeholder="Enter admin password"
+              placeholder="Enter password"
             />
           </div>
 

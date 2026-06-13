@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { AdminLayout } from "@/components/admin-layout";
 import { format } from "date-fns";
+import { supabase } from "@/lib/supabase";
+import { authFetch } from "@/lib/auth-fetch";
 
 interface Customer {
   id: number;
@@ -187,10 +189,8 @@ function DetailPanel({
   const [rejectReason, setRejectReason] = useState("");
 
   async function apiCall(method: string, path: string, body?: object): Promise<void> {
-    const res = await fetch(`/api/admin/appointments/${appt.id}/${path}`, {
+    const res = await authFetch(`/api/admin/appointments/${appt.id}/${path}`, {
       method,
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,
     });
     if (!res.ok) {
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
         : statusFilter
           ? `/api/admin/appointments?status=${encodeURIComponent(statusFilter)}`
           : "/api/admin/appointments?status=appointment_requested&status=deposit_requested&status=deposit_paid&status=invoice_sent&status=invoice_paid&status=editing_photos";
-      const res = await fetch(url, { credentials: "include" });
+      const res = await authFetch(url, { method: "GET" });
       if (res.status === 401) { navigate("/admin/login"); return; }
       if (!res.ok) throw new Error("Failed to load appointments");
       const data = (await res.json()) as Appointment[];
@@ -588,7 +588,7 @@ export default function AdminDashboard() {
   }
 
   async function handleLogout() {
-    await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+    await supabase.auth.signOut();
     navigate("/admin/login");
   }
 
