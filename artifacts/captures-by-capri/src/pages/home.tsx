@@ -10,7 +10,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/hero.JPG", 1400, 80)}
+            src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/hero.JPG", 1400, 80)}
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
