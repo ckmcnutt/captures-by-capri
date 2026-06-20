@@ -88,20 +88,21 @@ export default function Home() {
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:pb-32">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start" style={{ paddingBottom: '8rem' }}>
             {[
               { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature1.jpg", title: "Family" },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature2.jpg", title: "Portrait", className: "md:mt-16" },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature3.JPG", title: "Family", className: "md:mt-32" },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature4.JPG", title: "Family", className: "md:mt-32" }
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature2.jpg", title: "Portrait", style: { paddingTop: '4rem' } },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature3.JPG", title: "Family", style: { paddingTop: '8rem' } },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature4.JPG", title: "Family", style: { paddingTop: '8rem' } }
             ].map((img, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: i * 0.2 }}
-                className={`group cursor-pointer ${img.className || ''}`}
+                className="group cursor-pointer"
+                style={img.style}
               >
                 <div className="overflow-hidden aspect-[3/4] mb-4">
                   <img 
