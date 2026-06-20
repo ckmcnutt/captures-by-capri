@@ -88,7 +88,7 @@ export default function Home() {
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:pb-32">
             {[
               { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature1.jpg", title: "Family" },
               { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature2.jpg", title: "Portrait", className: "md:mt-16" },
