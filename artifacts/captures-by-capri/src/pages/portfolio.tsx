@@ -1,17 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { staticImages } from "@/lib/static-images";
-import { toThumbnailUrl } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+
+interface Photo {
+  id: number;
+  url: string;
+  title: string | null;
+  category: { category_name: string } | null;
+}
 
 export default function Portfolio() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const categories = ["Brand", "Couples", "Engagement", "Family", "Maternity", "Portrait", "Other"];
+  useEffect(() => {
+    async function fetchPhotos() {
+      setLoading(true);
+      setError(null);
+      const { data, error: fetchError } = await supabase
+        .from("photo")
+        .select("id, url, title, category:category_id(category_name)")
+        .eq("featured_portfolio", true)
+        .order("id");
 
-  const filteredImages = selectedCategory
-    ? staticImages.filter(img => img.category === selectedCategory)
+      if (fetchError) {
+        setError("Failed to load portfolio photos.");
+      } else {
+        setPhotos((data as unknown as Photo[]) ?? []);
+      }
+      setLoading(false);
+    }
+    fetchPhotos();
+  }, []);
+
+  const categories = Array.from(
+    new Set(
+      photos
+        .map((p) => p.category?.category_name)
+        .filter((n): n is string => !!n)
+    )
+  ).sort();
+
+  const filteredPhotos = selectedCategory
+    ? photos.filter((p) => p.category?.category_name === selectedCategory)
     : [];
 
   return (
@@ -19,65 +54,102 @@ export default function Portfolio() {
       <div className="container mx-auto max-w-7xl">
         <div className="mb-20 text-center space-y-6">
           <h1 className="text-5xl md:text-6xl font-serif">Portfolio</h1>
-          <p className="text-muted-foreground tracking-widest uppercase text-sm">A curated selection of works</p>
+          <p className="text-muted-foreground tracking-widest uppercase text-sm">
+            A curated selection of works
+          </p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap justify-center gap-6 md:gap-12 mb-16">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`text-sm tracking-widest uppercase transition-all pb-1 border-b ${
-                selectedCategory === cat
-                  ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {loading && (
+          <div className="text-center py-24 text-muted-foreground">
+            <p className="text-sm tracking-[0.3em] uppercase">Loading…</p>
+          </div>
+        )}
 
-        {/* Empty state */}
-        <AnimatePresence>
-          {!selectedCategory && (
+        {error && (
+          <div className="text-center py-24 text-muted-foreground">
+            <p className="text-sm tracking-[0.3em] uppercase">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* Filters */}
+            <div className="flex flex-wrap justify-center gap-6 md:gap-12 mb-16">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`text-sm tracking-widest uppercase transition-all pb-1 border-b ${
+                    selectedCategory === cat
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Prompt */}
+            <AnimatePresence>
+              {!selectedCategory && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center py-24 text-muted-foreground"
+                >
+                  <p className="text-sm tracking-[0.3em] uppercase">
+                    Select a category above to view photos
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* No photos in category */}
+            <AnimatePresence>
+              {selectedCategory && filteredPhotos.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center py-24 text-muted-foreground"
+                >
+                  <p className="text-sm tracking-[0.3em] uppercase">
+                    No photos yet
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Grid */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-24 text-muted-foreground"
+              layout
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8"
             >
-              <p className="text-sm tracking-[0.3em] uppercase">Select a category above to view photos</p>
+              <AnimatePresence mode="popLayout">
+                {filteredPhotos.map((photo) => (
+                  <motion.div
+                    key={photo.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.4 }}
+                    className="group relative aspect-[3/4] cursor-pointer overflow-hidden bg-secondary"
+                    onClick={() => setLightboxImage(photo.url)}
+                  >
+                    <img
+                      src={photo.url}
+                      alt={photo.title ?? ""}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Grid */}
-        <motion.div
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredImages.map((image) => (
-              <motion.div
-                key={image.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.4 }}
-                className="group relative aspect-[3/4] cursor-pointer overflow-hidden bg-secondary"
-                onClick={() => setLightboxImage(image.url)}
-              >
-                <img
-                  src={toThumbnailUrl(image.url, 600, 75)}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+          </>
+        )}
 
         {/* Lightbox */}
         <AnimatePresence>
