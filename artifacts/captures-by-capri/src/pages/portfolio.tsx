@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 interface Photo {
   id: number;
@@ -18,23 +17,19 @@ export default function Portfolio() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchPhotos() {
-      setLoading(true);
-      setError(null);
-      const { data, error: fetchError } = await supabase
-        .from("photo")
-        .select("id, url, title, category:category_id(category_name)")
-        .eq("featured_portfolio", true)
-        .order("id");
-
-      if (fetchError) {
+    fetch("/api/portfolio")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data: Photo[]) => {
+        setPhotos(data);
+        setLoading(false);
+      })
+      .catch(() => {
         setError("Failed to load portfolio photos.");
-      } else {
-        setPhotos((data as unknown as Photo[]) ?? []);
-      }
-      setLoading(false);
-    }
-    fetchPhotos();
+        setLoading(false);
+      });
   }, []);
 
   const categories = Array.from(
