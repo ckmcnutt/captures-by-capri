@@ -10,7 +10,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/hero.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2hlcm8uSlBHIiwiaWF0IjoxNzc5ODMxNTEzLCJleHAiOjE4MTEzNjc1MTN9.UCETBnaNjV70CAW21E3IiCFqx1OR9cS94aDWAQ_y3AM", 1400, 80)}
+            src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/hero.JPG", 1400, 80)}
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
@@ -60,7 +60,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/meet_me.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL21lZXRfbWUuSlBHIiwiaWF0IjoxNzc5ODMxNTQ2LCJleHAiOjE4MTEzNjc1NDZ9.0_HAP0caJEhCGPhAlCg7JmDQRHP5jWznOS8k8s9Ghlo", 800, 75)} 
+                src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me.JPG", 800, 75)} 
                 alt="Self Portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
@@ -88,11 +88,12 @@ export default function Home() {
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/feature1.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2ZlYXR1cmUxLmpwZyIsImlhdCI6MTc3OTgzMTQ1MSwiZXhwIjoxODExMzY3NDUxfQ.nrpBIoog8I33ChhWK-zAyzhWze-rNpTCpn6IZ8Jcnb4", title: "Family" },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/feature2.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2ZlYXR1cmUyLmpwZyIsImlhdCI6MTc3OTgzMTQ3NCwiZXhwIjoxODExMzY3NDc0fQ.GT_KXXD2clk7912LlJ6YIO65_czZVXyzC9AUY3RStZs", title: "Portrait", className: "md:mt-16" },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/sign/Photos/Website/Home/feature3.JPG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84YTU1NTdiOC1jYWYyLTRlMDUtOTg4NS01Yjk1YTYxNTM5N2QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvV2Vic2l0ZS9Ib21lL2ZlYXR1cmUzLkpQRyIsImlhdCI6MTc3OTgzMTQ4NywiZXhwIjoxODExMzY3NDg3fQ._wHch7ZK0Wdtpd3kdsB8l15OqqR3ihvk3Q1gvws4ars", title: "Couple", className: "md:mt-32" }
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature1.jpg", title: "Family" },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature2.jpg", title: "Portrait", className: "md:mt-16" },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature3.JPG", title: "Family", className: "md:mt-32" },
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature4.JPG", title: "Family", className: "md:mt-32" }
             ].map((img, i) => (
               <motion.div 
                 key={i}
