@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { getSeason, toThumbnailUrl } from "@/lib/utils";
+import { getSeason } from "@/lib/utils";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/hero.JPG", 1400, 80)}
+            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/hero.JPG"
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
@@ -60,7 +60,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src={toThumbnailUrl("https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me.JPG", 800, 75)} 
+                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me.JPG"
                 alt="Self Portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
@@ -106,7 +106,7 @@ export default function Home() {
               >
                 <div className="overflow-hidden aspect-[3/4] mb-4">
                   <img 
-                    src={toThumbnailUrl(img.src, 800, 75)} 
+                    src={img.src}
                     alt={img.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
