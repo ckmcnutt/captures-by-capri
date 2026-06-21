@@ -81,4 +81,43 @@ router.get("/appointments/:id", isAdmin, async (req, res): Promise<void> => {
   res.json(data);
 });
 
+router.patch("/appointments/:id/status", isAdmin, async (req, res): Promise<void> => {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(rawId, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid appointment id" });
+    return;
+  }
+
+  const { status_name } = req.body as { status_name?: string };
+  if (!status_name || typeof status_name !== "string") {
+    res.status(400).json({ error: "status_name is required" });
+    return;
+  }
+
+  const { data: statusRow, error: statusErr } = await supabase
+    .from("appointment_status")
+    .select("id")
+    .eq("status_name", status_name)
+    .single();
+
+  if (statusErr || !statusRow) {
+    res.status(400).json({ error: `Unknown status: ${status_name}` });
+    return;
+  }
+
+  const { error } = await supabase
+    .from("appointment")
+    .update({ status_id: statusRow.id })
+    .eq("id", id);
+
+  if (error) {
+    req.log.error({ err: error }, "Failed to update appointment status");
+    res.status(500).json({ error: "Failed to update status" });
+    return;
+  }
+
+  res.json({ ok: true });
+});
+
 export default router;

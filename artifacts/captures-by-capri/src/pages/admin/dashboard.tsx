@@ -187,6 +187,7 @@ function DetailPanel({
   );
   const [photoUrl, setPhotoUrl] = useState(appt.photo_delivery_url ?? "");
   const [rejectReason, setRejectReason] = useState("");
+  const [pendingStatus, setPendingStatus] = useState(status?.status_name ?? "");
 
   async function apiCall(method: string, path: string, body?: object): Promise<void> {
     const res = await authFetch(`/api/admin/appointments/${appt.id}/${path}`, {
@@ -236,6 +237,34 @@ function DetailPanel({
             </div>
             <StatusTimeline statusName={statusName} />
           </div>
+
+          {/* Change Status */}
+          <section className="space-y-2">
+            <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Change Status</h3>
+            <div className="flex gap-2">
+              <select
+                value={pendingStatus}
+                onChange={(e) => setPendingStatus(e.target.value)}
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:border-zinc-600 transition-colors"
+              >
+                {ALL_STATUSES_FULL.map((s) => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </select>
+              <ActionButton
+                variant="secondary"
+                onClick={() =>
+                  run("change-status", () =>
+                    apiCall("PATCH", "status", { status_name: pendingStatus })
+                  )
+                }
+                loading={loading === "change-status"}
+                disabled={pendingStatus === statusName}
+              >
+                Apply
+              </ActionButton>
+            </div>
+          </section>
 
           {error && (
             <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
@@ -536,6 +565,20 @@ const ALL_STATUSES = [
   "invoice_paid",
   "editing_photos",
   "photos_released",
+];
+
+const ALL_STATUSES_FULL = [
+  { key: "appointment_requested",  label: "Appointment Requested" },
+  { key: "appointment_confirmed",  label: "Appointment Confirmed" },
+  { key: "deposit_requested",      label: "Deposit Requested" },
+  { key: "deposit_paid",           label: "Deposit Paid" },
+  { key: "invoice_sent",           label: "Invoice Sent" },
+  { key: "invoice_paid",           label: "Invoice Paid" },
+  { key: "editing_photos",         label: "Editing Photos" },
+  { key: "photos_released",        label: "Photos Released" },
+  { key: "appointment_complete",   label: "Appointment Complete" },
+  { key: "appointment_canceled",   label: "Appointment Canceled" },
+  { key: "appointment_rejected",   label: "Appointment Rejected" },
 ];
 
 export default function AdminDashboard() {
