@@ -27,6 +27,17 @@ export default function Book() {
             className="space-y-10"
           >
             <div className="space-y-4">
+              <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Questions?</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Email{" "}
+                <a href="mailto:madison@capturesbycapri.com" className="text-foreground underline underline-offset-4 hover:text-primary transition-colors">
+                  madison@capturesbycapri.com
+                </a>
+                {" "}and we&apos;ll get back to you as soon as possible.
+              </p>
+            </div>
+
+            <div className="space-y-4">
               <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">What to Expect</p>
               <ul className="space-y-4 text-sm text-muted-foreground">
                 {[
