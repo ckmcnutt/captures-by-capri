@@ -72,6 +72,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex gap-6 mb-12 text-muted-foreground">
             <a href="https://www.instagram.com/capri.captures" className="hover:text-foreground transition-colors">Instagram</a>
           </div>
+          <div className="flex gap-6 mb-8 text-muted-foreground text-sm">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+          </div>
           <p className="text-muted-foreground text-sm tracking-wider uppercase">
             © {new Date().getFullYear()} Capri Photography. All rights reserved.
           </p>
