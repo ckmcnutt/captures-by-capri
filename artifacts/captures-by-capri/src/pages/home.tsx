@@ -60,7 +60,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me.JPG"
+                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me2.JPG"
                 alt="Self Portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
@@ -93,7 +93,7 @@ export default function Home() {
               { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature1.jpg", title: "Family" },
               { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature2.jpg", title: "Portrait", style: { paddingTop: '4rem' } },
               { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature3.JPG", title: "Couple", style: { paddingTop: '8rem' } },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature4.jpg", title: "Family", style: { paddingTop: '8rem' } }
+              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature4.jpg", title: "Engagement", style: { paddingTop: '8rem' } }
             ].map((img, i) => (
               <motion.div
                 key={i}
