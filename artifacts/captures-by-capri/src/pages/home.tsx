@@ -60,7 +60,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me2.JPG"
+                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me.JPG"
                 alt="Self Portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
