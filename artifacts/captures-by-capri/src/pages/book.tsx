@@ -45,8 +45,8 @@ export default function Book() {
                   "$50 deposit required at booking - refundable if canceled at least 1 week prior",
                   "Remainder of balance due 1 day prior to appointment",
                   "A followup email or text with additional questions",
-                  "10-15 edited photos for a 30 minute session - $100",
-                  "20-30 edited photos for a 1 hour session - $200",
+                  "15+ edited photos for a 30 minute session - $100",
+                  "30+ edited photos for a 1 hour session - $200",
                   "For sessions located over 45 minutes away from Cullman AL, a travel fee may be applied",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
