@@ -85,6 +85,16 @@ export default function Book() {
                 className="w-full"
               />
             </div>
+
+            <div className="mt-8 space-y-3 border-t border-border pt-6">
+              <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">SMS Consent</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                By selecting SMS as my preferred contact method, I agree to receive text messages
+                from Captures By Capri regarding my booking, appointment reminders, payment links,
+                invoices, and customer support. Message frequency varies. Message and data rates may apply.
+                Reply <strong>STOP</strong> to opt out and <strong>HELP</strong> for help.
+              </p>
+            </div>
           </motion.div>
         </div>
       </div>
