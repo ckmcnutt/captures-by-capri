@@ -10,7 +10,7 @@ export default function Home() {
       <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/hero.JPG"
+            src="/media/home/hero.JPG"
             alt="Cinematic couple portrait" 
             className="w-full h-full object-cover opacity-80"
           />
@@ -60,7 +60,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
-                src="https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/meet_me.JPG"
+                src="/media/home/meet_me.JPG"
                 alt="Self Portrait" 
                 className="w-full aspect-[3/4] object-cover"
               />
@@ -90,10 +90,10 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start" style={{ paddingBottom: '8rem' }}>
             {[
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature1.jpg", title: "Family" },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature2.jpg", title: "Portrait", style: { paddingTop: '4rem' } },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature3.JPG", title: "Couple", style: { paddingTop: '8rem' } },
-              { src: "https://sizdhvcsdtmhfkvddxmo.supabase.co/storage/v1/object/public/Photos/home/feature4.jpg", title: "Engagement", style: { paddingTop: '8rem' } }
+              { src: "/media/home/feature1.jpg", title: "Family" },
+              { src: "/media/home/feature2.jpg", title: "Portrait", style: { paddingTop: '4rem' } },
+              { src: "/media/home/feature3.JPG", title: "Couple", style: { paddingTop: '8rem' } },
+              { src: "/media/home/feature4.jpg", title: "Engagement", style: { paddingTop: '8rem' } }
             ].map((img, i) => (
               <motion.div
                 key={i}

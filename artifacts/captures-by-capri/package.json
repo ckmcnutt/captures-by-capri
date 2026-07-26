@@ -35,7 +35,6 @@
     "wouter": "catalog:"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.106.2",
     "date-fns": "^3.6.0"
   }
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { AdminLayout } from "@/components/admin-layout";
 import { format } from "date-fns";
-import { supabase } from "@/lib/supabase";
+import { useAdminAuth } from "./auth-guard";
 import { authFetch } from "@/lib/auth-fetch";
 
 interface Customer {
@@ -589,6 +589,9 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState("");
   const [, navigate] = useLocation();
   const selectedIdRef = useRef<number | null>(null);
+  // Redirects to /admin/login before any data request, rather than rendering the
+  // dashboard shell and only bouncing after the first 401 comes back.
+  const { checked, authed } = useAdminAuth();
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -616,9 +619,11 @@ export default function AdminDashboard() {
   }, [statusFilter, navigate]);
 
   useEffect(() => {
+    // Gated on `authed` so the first paint doesn't fire a guaranteed-401 request.
+    if (!authed) return;
     fetchAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  }, [statusFilter, authed]);
 
   function handleSelect(appt: Appointment) {
     selectedIdRef.current = appt.id;
@@ -631,9 +636,26 @@ export default function AdminDashboard() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    // Clears the httpOnly session cookie server-side; the client can't do it.
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => undefined);
     navigate("/admin/login");
   }
+
+  if (!checked) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background dark">
+        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
+          Checking…
+        </p>
+      </div>
+    );
+  }
+
+  // useAdminAuth has already navigated to /admin/login at this point.
+  if (!authed) return null;
 
   return (
     <AdminLayout onLogout={handleLogout}>

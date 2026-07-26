@@ -28,6 +28,19 @@ const boolFromEnv = (defaultValue: boolean) =>
     .default(defaultValue ? "true" : "false")
     .transform((v) => v === "true" || v === "1" || v === "yes" || v === "on");
 
+/**
+ * Directory paths, resolved against the repo root rather than process.cwd().
+ *
+ * cwd differs between `pnpm --filter ... dev` (artifacts/api-server) and a
+ * systemd unit, so a relative `MEDIA_DIR=./media` would otherwise point at
+ * different places — and silently 404 every image.
+ */
+const dirFromEnv = (defaultValue: string) =>
+  z
+    .string()
+    .default(defaultValue)
+    .transform((v) => (path.isAbsolute(v) ? v : path.resolve(REPO_ROOT, v)));
+
 const schema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -46,13 +59,11 @@ const schema = z.object({
     .min(32, "SESSION_SECRET must be at least 32 characters (openssl rand -hex 32)"),
   SESSION_TTL_HOURS: z.coerce.number().positive().default(12),
 
-  // Static assets.
-  MEDIA_DIR: z.string().default(path.join(REPO_ROOT, "media")),
-  WEB_DIST_DIR: z
-    .string()
-    .default(
-      path.join(REPO_ROOT, "artifacts", "captures-by-capri", "dist", "public"),
-    ),
+  // Static assets. Relative values are resolved against the repo root.
+  MEDIA_DIR: dirFromEnv(path.join(REPO_ROOT, "media")),
+  WEB_DIST_DIR: dirFromEnv(
+    path.join(REPO_ROOT, "artifacts", "captures-by-capri", "dist", "public"),
+  ),
   // Production serves the built SPA from Express. Locally Vite owns it so HMR works.
   SERVE_STATIC: boolFromEnv(false),
 

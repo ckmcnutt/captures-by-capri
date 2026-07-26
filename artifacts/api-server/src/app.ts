@@ -47,9 +47,15 @@ app.use(cookieParser(env.SESSION_SECRET));
 // ── 3. API — before any static handling, so no asset path can shadow a route ─
 app.use("/api", router);
 
-// ── 4. Media: the local mirror of the ex-Supabase Photos bucket ──────────────
-// Mounted before the SPA fallback so a missing photo 404s instead of returning
-// index.html, which would otherwise render the whole app inside an <img> tag.
+// ── 4. JSON 404 for unmatched API routes ────────────────────────────────────
+// MUST come before the SPA fallback below. Registered after it, this is
+// unreachable and /api/typo answers 200 with index.html, which turns every
+// client-side API bug into a confusing JSON parse error.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+// ── 5. Media: the local mirror of the ex-Supabase Photos bucket ──────────────
 app.use(
   "/media",
   express.static(env.MEDIA_DIR, {
@@ -60,7 +66,16 @@ app.use(
   }),
 );
 
-// ── 5. The built SPA (production only; locally Vite owns this and proxies here)
+// ── 6. Terminal 404 for /media ──────────────────────────────────────────────
+// Also must precede the SPA fallback. express.static calls next() when a file is
+// missing, so without this a missing photo returns index.html with a 200 — the
+// browser then renders the whole HTML document inside an <img> tag and shows a
+// blank tile with no clue why.
+app.use("/media", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+// ── 7. The built SPA (production only; locally Vite owns this and proxies here)
 if (env.SERVE_STATIC) {
   app.use(express.static(env.WEB_DIST_DIR, { index: false, maxAge: "1h" }));
 
@@ -76,12 +91,7 @@ if (env.SERVE_STATIC) {
   });
 }
 
-// ── 6. JSON 404 for unmatched API routes ────────────────────────────────────
-app.use("/api", (_req, res) => {
-  res.status(404).json({ error: "Not found" });
-});
-
-// ── 7. Global error handler ─────────────────────────────────────────────────
+// ── 8. Global error handler ─────────────────────────────────────────────────
 // Express 5 forwards rejected promises from async handlers here.
 app.use(
   (
