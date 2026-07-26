@@ -1,66 +1,37 @@
+import path from "node:path";
+import { config as loadEnv } from "dotenv";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const rawPort = process.env.PORT;
+// Vite reads process.env at config-evaluation time, so it needs the root .env
+// loaded here — api-server's dotenv setup happens in a different process.
+loadEnv({ path: path.resolve(import.meta.dirname, "..", "..", ".env") });
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
+// WEB_PORT rather than PORT: PORT belongs to api-server, and both read the same
+// root .env, so sharing the name would collide.
+const port = Number(process.env.WEB_PORT ?? 5173);
+
+if (!Number.isInteger(port) || port <= 0) {
+  throw new Error(`Invalid WEB_PORT value: "${process.env.WEB_PORT}"`);
 }
 
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
-
+const basePath = process.env.BASE_PATH ?? "/";
 const calUrl =
   process.env.CAL_URL ?? "https://cal.com/capturesbycapri/appointment";
 
-const supabaseUrl = process.env.SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? "";
+// Replaces the Replit artifact router, which used to route /api to :3000 for us.
+const apiTarget = process.env.API_PROXY_TARGET ?? "http://127.0.0.1:3000";
 
 export default defineConfig({
   base: basePath,
   define: {
     __CAL_URL__: JSON.stringify(calUrl),
-    __SUPABASE_URL__: JSON.stringify(supabaseUrl),
-    __SUPABASE_ANON_KEY__: JSON.stringify(supabaseAnonKey),
   },
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
     },
     dedupe: ["react", "react-dom"],
   },
@@ -72,15 +43,19 @@ export default defineConfig({
   server: {
     port,
     strictPort: true,
-    host: "0.0.0.0",
-    allowedHosts: true,
+    host: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      // changeOrigin: false keeps the Host header as localhost:<WEB_PORT> so the
+      // admin session cookie's implicit domain matches.
+      "/api": { target: apiTarget, changeOrigin: false },
+      "/media": { target: apiTarget, changeOrigin: false },
     },
   },
   preview: {
     port,
-    host: "0.0.0.0",
-    allowedHosts: true,
+    host: true,
   },
 });

@@ -2,12 +2,27 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=22 <25",
+    "pnpm": ">=11"
+  },
   "scripts": {
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "dev": "pnpm -r --parallel --if-present run dev",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && pnpm run db:up && bash scripts/db/bootstrap.sh",
+    "db:psql": "docker compose exec -T postgres psql -U capri -d capri",
+    "db:restore": "bash scripts/db/restore-dump.sh",
+    "db:extract": "bash scripts/db/extract-data.sh",
+    "db:pull": "pnpm --filter @workspace/api-server run db:pull",
+    "db:generate": "pnpm --filter @workspace/api-server run db:generate",
+    "db:migrate": "pnpm --filter @workspace/api-server run db:migrate",
+    "db:studio": "pnpm --filter @workspace/api-server run db:studio",
+    "db:seed": "pnpm --filter @workspace/api-server run db:seed"
   },
-  "private": true,
   "devDependencies": {
     "prettier": "^3.8.3",
     "typescript": "~5.9.3"
