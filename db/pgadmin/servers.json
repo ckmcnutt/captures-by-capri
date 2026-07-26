@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "capri (local)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "capri",
+      "Username": "capri",
+      "SSLMode": "prefer",
+      "Comment": "pgAdmin reaches Postgres over the compose network on 5432, not the host's 5433."
+    }
+  }
+}

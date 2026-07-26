@@ -1,0 +1,58 @@
+name: capri
+
+services:
+  postgres:
+    # Matches the Supabase-hosted version this project is migrating off (17.6.1.127),
+    # so a pg_restore of the production dump behaves identically.
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: capri
+      POSTGRES_PASSWORD: capri
+      POSTGRES_DB: capri
+      # Deterministic collation so ORDER BY matches production.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      # 5433 on the host to avoid clashing with a natively installed Postgres.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Read-only so `psql -f /db/sql/...` works inside the container.
+      - ./db:/db:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U capri -d capri"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  pgadmin:
+    image: dpage/pgadmin4:9
+    restart: unless-stopped
+    environment:
+      # pgAdmin 9 validates this address and crash-loops on startup if it fails.
+      # It rejects both a missing TLD ("dev@local") and reserved TLDs
+      # (".local", ".test"), so use example.com -- reserved by RFC 2606 for
+      # exactly this and accepted by the validator.
+      PGADMIN_DEFAULT_EMAIL: dev@example.com
+      PGADMIN_DEFAULT_PASSWORD: dev
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+      - ./db/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  pgadmin:
+
+# Note: deliberately no /docker-entrypoint-initdb.d mount. Init scripts run only
+# when the data volume is empty, which is exactly wrong for the
+# restore -> find a mapping bug -> fix -> restore loop this migration needs.
+# The ./db bind mount plus scripts/db/*.sh make every step re-runnable instead.
+# Use `pnpm db:reset` when you actually want a clean slate.
