@@ -42,7 +42,7 @@ export default function Book() {
               <ul className="space-y-4 text-sm text-muted-foreground">
                 {[
                   "Pick any available slot - no back and forth",
-                  "$50 deposit required at booking - refundable if canceled at least 1 week prior",
+                  "$50 deposit required at booking - refundable if canceled at least 1 week prior. APPOINTMENTS ARE NOT GUARANTEED UNTIL DEPOSIT IS PAID.",
                   "Remainder of balance due 1 day prior to appointment",
                   "A followup email or text with additional questions",
                   "15+ edited photos for a 30 minute session - $100",
