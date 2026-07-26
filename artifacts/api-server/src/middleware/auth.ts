@@ -1,20 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
-import { supabase } from "../lib/supabase";
+import { verifySession } from "../lib/session";
 
-export async function isAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
+/**
+ * Gate for the admin API.
+ *
+ * Synchronous now: it validates a locally signed cookie instead of making a
+ * network round-trip to Supabase Auth on every request. It also actually checks
+ * for an admin — the previous implementation accepted any valid Supabase user in
+ * the project, with no role, claim or allowlist check.
+ */
+export function isAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (!verifySession(req)) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-
-  const token = authHeader.slice(7);
-  const { data, error } = await supabase.auth.getUser(token);
-
-  if (error || !data.user) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   next();
 }

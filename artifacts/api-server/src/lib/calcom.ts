@@ -44,3 +44,17 @@ export async function declineCalBooking(bookingUid: string, reason?: string): Pr
   await calcomRequest("POST", `/bookings/${bookingUid}/decline`, reason ? { reason } : undefined);
   logger.info({ bookingUid }, "Cal.com booking declined");
 }
+
+/**
+ * Cancel a confirmed booking. Used by the scheduled jobs when an invoice goes
+ * unpaid past the appointment time.
+ *
+ * Note this throws on a non-2xx response (via calcomRequest), whereas the
+ * Supabase edge function only logged. Callers that have already committed a
+ * database change must catch it so a Cal.com outage doesn't roll that back.
+ */
+export async function cancelCalBooking(bookingUid: string, reason: string): Promise<void> {
+  logger.info({ bookingUid }, "Canceling Cal.com booking");
+  await calcomRequest("POST", `/bookings/${bookingUid}/cancel`, { reason });
+  logger.info({ bookingUid }, "Cal.com booking canceled");
+}
