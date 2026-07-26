@@ -52,3 +52,15 @@ res.json
 
 # Supabase
 supabase/.temp
+
+# Env — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# Local media mirror of the ex-Supabase Photos bucket
+/media/
+
+# DB dumps and extracted seed data — contain customer PII
+/db/dump/
+/db/seed/
