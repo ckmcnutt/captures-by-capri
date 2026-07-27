@@ -27,7 +27,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
       # The bind mount below, not the host's relative ./media.
-      MEDIA_DIR: /app/media
+      MEDIA_DIR: ${MEDIA_DIR:-/app/media}
       # Always true: this container has no separate Vite dev server, so
       # api-server must be the one serving the built SPA.
       SERVE_STATIC: "true"
@@ -48,7 +48,7 @@ services:
     volumes:
       # Same directory `pnpm dev` reads MEDIA_DIR from -- one copy of the
       # photos either way.
-      - ./media:/app/media
+      - ${HOST_MEDIA_DIR}:${MEDIA_DIR:-/app/media}
     depends_on:
       postgres:
         condition: service_healthy
