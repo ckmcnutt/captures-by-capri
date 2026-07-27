@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { env } from "../../env";
 import { rateLimit } from "../../lib/rate-limit";
 import { checkPassword, clearSession, issueSession } from "../../lib/session";
 import { isAdmin } from "../../middleware/auth";
@@ -33,9 +34,10 @@ router.post("/logout", (req, res): void => {
   res.json({ ok: true });
 });
 
-/** Session probe used by the frontend auth guard. */
+/** Session probe used by the frontend auth guard. Also carries the deployed
+ * commit hash so the admin dashboard can confirm a deploy landed. */
 router.get("/me", isAdmin, (_req, res): void => {
-  res.json({ ok: true });
+  res.json({ ok: true, commit: env.GIT_COMMIT });
 });
 
 router.use(appointmentsRouter);

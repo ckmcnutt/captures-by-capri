@@ -9,6 +9,11 @@ services:
         # `docker compose up -d --build`, not just a restart.
         BASE_PATH: ${BASE_PATH:-/}
         CAL_URL: ${CAL_URL:-https://cal.com/capturesbycapri/appointment}
+        # Set by the shell invoking `docker compose build`, e.g.:
+        #   GIT_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build
+        # Not read from .env: it must reflect the commit actually being built,
+        # not a value that goes stale the moment it's written down.
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     restart: unless-stopped
     environment:
       # Always production, not passed through from .env: the image only

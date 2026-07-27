@@ -11,21 +11,24 @@ providing Postgres, Auth, Storage and two Deno edge functions.
 ## Architecture
 
 ```
-                     Caddy (TLS only, automatic ACME)
+                     Caddy (host process, TLS only, automatic ACME)
                                   │
-                     api-server  (Express 5, one process)
+                     api-server  (Express 5, one process, one container)
                      ├── /api/*      REST API
                      ├── /media/*    photo files from MEDIA_DIR
                      ├── /*          the built SPA + history fallback
                      └── node-cron   time-based appointment workflow
                                   │
-                     Postgres 17 (loopback)
+                     Postgres 17 (container)
 ```
 
 One process serves the API, the images and the SPA. That keeps the admin session
 cookie same-origin by construction — no CORS configuration, no cookie-domain
-problems — and means one systemd unit to supervise. Caddy exists only to
-terminate TLS, which Stripe and Cal.com both require for webhooks.
+problems — and means one container to supervise, restarted by Docker's own
+`restart: unless-stopped` rather than a systemd unit. Caddy runs directly on the
+LXC host (not containerized) and exists only to terminate TLS, which Stripe and
+Cal.com both require for webhooks, reverse-proxying to the app container's
+published port.
 
 | Package | What it is |
 |---|---|
@@ -40,7 +43,8 @@ pnpm workspace. Node 24, pnpm 11 (see `engines` and `.nvmrc`).
 
 - Node 24 (`nvm use`)
 - pnpm 11 (`corepack enable`)
-- Docker, for the local Postgres and pgAdmin
+- Docker — for Postgres and pgAdmin locally; in production it also runs the app
+  itself (see [Deployment](#deployment))
 
 ## First run
 
@@ -73,10 +77,14 @@ the API, `/media`, and the built SPA on one port — no separate Vite process.
 
 ```bash
 cp .env.example .env          # then fill in ADMIN_PASSWORD and SESSION_SECRET
-docker compose up -d --build  # postgres, pgadmin, and the app, all in containers
+GIT_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build
 pnpm db:migrate                # schema — still runs from the host, against :5433
 pnpm db:seed
 ```
+
+`GIT_COMMIT` is baked into the image and shown at the bottom of the admin
+dashboard, so a deploy can be confirmed by eye. Omitting it just leaves the
+footer reading `unknown` — harmless locally, worth not forgetting on the LXC.
 
 Open <http://localhost:3000>. This is the same build the LXC eventually runs, so
 `NODE_ENV` is always `production` inside the container regardless of `.env` —
@@ -97,8 +105,11 @@ zod validation, so a missing or malformed value fails at boot with every problem
 listed at once), and `vite.config.ts` loads it separately because Vite reads
 `process.env` at config-evaluation time in its own process.
 
-In production, systemd's `EnvironmentFile` wins — dotenv is loaded with
-`override: false`.
+In the app container there is no `.env` file at all (`.dockerignore` excludes
+it) — `docker-compose.yml`'s `environment:` block sets real process env vars
+directly, sourced from the host's `.env` via compose's own interpolation.
+`env.ts`'s dotenv call finds nothing to load and no-ops, which is why
+`override: false` is safe: it never has anything to *not* override.
 
 The ones worth calling out:
 
@@ -111,6 +122,7 @@ The ones worth calling out:
 | `ENABLE_SCHEDULER` | `true` only in production. |
 | `CRON_SCHEDULE` | **At most once per day.** See [Gotchas](#gotchas). |
 | `MEDIA_DIR` | Relative values resolve against the repo root, not the working directory. |
+| `GIT_COMMIT` | Build arg, not a runtime var — set it when invoking `docker compose build`/`up`, not in `.env`. Shown on the admin dashboard. |
 
 Never put a secret in a Vite `define` — those are inlined into the public bundle.
 
@@ -204,43 +216,40 @@ mp0: /tank/capri/media,mp=/srv/capri/media
 
 ## Deployment
 
+Docker-only: Postgres, pgAdmin, and the app all run as containers on the LXC,
+via the same `docker-compose.yml` used in [Running everything with
+Docker](#running-everything-with-docker). There is no bare-metal Node process
+and no systemd unit for api-server — Docker's `restart: unless-stopped` handles
+crashes, and the Docker daemon's own systemd unit handles host reboots. Node
+and pnpm still need to exist on the host, but only to run one-off tooling
+(`pnpm db:migrate`, `pnpm db:seed`) against Postgres' host-published port —
+same division of labor as local dev.
+
 ```bash
 git clone … /srv/capri/app && cd /srv/capri/app
 corepack enable && corepack prepare pnpm@11.2.2 --activate
 pnpm install --frozen-lockfile
-pnpm build
-pnpm db:migrate
+cp .env.example .env
 ```
 
-Install Postgres 17 natively (`apt install postgresql-17` from PGDG) rather than
-running Docker inside the container, and leave it on `listen_addresses = 'localhost'`.
+Fill in `.env`: `ADMIN_PASSWORD`, `SESSION_SECRET`, `POSTGRES_*`,
+`POSTGRES_DATA_VOLUME` (a bind-mounted host path here, not a named volume, so
+it survives `docker compose down`), and `HOST_MEDIA_DIR` pointing at the
+Proxmox mp0 mount — see [Media files](#media-files). Also set
+`NODE_ENV=production`, `ENABLE_SCHEDULER=true`, `CAL_WEBHOOK_SECRET`, and the
+Stripe/Cal/Twilio/Resend keys.
 
-systemd unit, with `NODE_ENV=production SERVE_STATIC=true ENABLE_SCHEDULER=true`:
-
-```ini
-[Unit]
-After=network-online.target postgresql.service
-Requires=postgresql.service
-
-[Service]
-User=capri
-WorkingDirectory=/srv/capri/app/artifacts/api-server
-EnvironmentFile=/srv/capri/app/.env
-Environment=NODE_ENV=production SERVE_STATIC=true ENABLE_SCHEDULER=true
-ExecStart=/usr/bin/node dist/index.js
-Restart=always
-RestartSec=5
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-PrivateTmp=true
-ReadWritePaths=/srv/capri/media
-
-[Install]
-WantedBy=multi-user.target
+```bash
+GIT_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build
+pnpm db:migrate                # against the host-published :5433
 ```
 
-Caddyfile:
+First-time cutover from a restored dump additionally needs
+`db/sql/100_rewrite_photo_urls.sql` and `db/sql/110_sync_sequences.sql` — see
+[`db/README.md`](db/README.md).
+
+Caddy stays on the host (not containerized), reverse-proxying to the app
+container's published port:
 
 ```
 capturesbycapri.com, www.capturesbycapri.com {
@@ -252,8 +261,24 @@ capturesbycapri.com, www.capturesbycapri.com {
 Then repoint the **Stripe** webhook to `/api/webhooks/stripe` and the **Cal.com**
 webhook to `/api/webhooks/cal` with `CAL_WEBHOOK_SECRET` set.
 
-Back up nightly: `pg_dump -Fc` plus a snapshot of the media directory. Test a
+Postgres (`5433`) and pgAdmin (`5050`) are published to all interfaces by
+default, same as local dev — fine behind a LAN/Proxmox firewall, but confirm
+nothing routes those ports from the public internet before going live. Caddy
+is the only thing meant to be internet-facing.
+
+Back up nightly: `docker compose exec postgres pg_dump -Fc -U "$POSTGRES_USER"
+"$POSTGRES_DB" > backup.dump` plus a snapshot of the media directory. Test a
 restore before decommissioning anything.
+
+**Redeploying a new commit:**
+
+```bash
+git pull
+GIT_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build
+```
+
+Check the commit hash in the admin dashboard footer to confirm it landed —
+see `/api/admin/me` in the [API](#api) table.
 
 ## Gotchas
 

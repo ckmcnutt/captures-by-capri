@@ -591,7 +591,7 @@ export default function AdminDashboard() {
   const selectedIdRef = useRef<number | null>(null);
   // Redirects to /admin/login before any data request, rather than rendering the
   // dashboard shell and only bouncing after the first 401 comes back.
-  const { checked, authed } = useAdminAuth();
+  const { checked, authed, commit } = useAdminAuth();
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
   if (!authed) return null;
 
   return (
-    <AdminLayout onLogout={handleLogout}>
+    <AdminLayout onLogout={handleLogout} commit={commit}>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="font-serif text-3xl tracking-wider">Appointments</h1>
         <select

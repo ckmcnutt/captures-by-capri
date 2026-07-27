@@ -47,6 +47,9 @@ const schema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.string().default("info"),
+  // Baked in at Docker build time (see Dockerfile's GIT_COMMIT build arg).
+  // "unknown" for `pnpm dev`, which runs straight from source, not an image.
+  GIT_COMMIT: z.string().default("unknown"),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 

@@ -54,6 +54,12 @@ RUN pnpm install --frozen-lockfile --prod
 # ---- runtime ----
 FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
+# Short commit hash of the deployed source, read by env.ts and surfaced on the
+# admin dashboard so a deploy can be confirmed by eye. Not baked into the SPA
+# bundle since it's only needed server-side -- no rebuild-on-every-commit cost
+# for the Vite stage.
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
 WORKDIR /app
 COPY --from=prod-deps /app ./
 COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist

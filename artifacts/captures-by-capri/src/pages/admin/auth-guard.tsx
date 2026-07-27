@@ -4,13 +4,18 @@ import { useLocation } from "wouter";
 export function useAdminAuth() {
   const [checked, setChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [commit, setCommit] = useState<string | null>(null);
   const [, navigate] = useLocation();
 
   useEffect(() => {
     fetch("/api/admin/me", { credentials: "include" })
-      .then((res) => {
+      .then(async (res) => {
         if (res.ok) {
           setAuthed(true);
+          const data = (await res.json().catch(() => ({}))) as {
+            commit?: string;
+          };
+          setCommit(data.commit ?? null);
         } else {
           navigate("/admin/login");
         }
@@ -19,5 +24,5 @@ export function useAdminAuth() {
       .finally(() => setChecked(true));
   }, [navigate]);
 
-  return { checked, authed };
+  return { checked, authed, commit };
 }

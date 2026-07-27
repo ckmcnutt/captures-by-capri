@@ -4,9 +4,10 @@ import { Link } from "wouter";
 interface AdminLayoutProps {
   children: React.ReactNode;
   onLogout?: () => void;
+  commit?: string | null;
 }
 
-export function AdminLayout({ children, onLogout }: AdminLayoutProps) {
+export function AdminLayout({ children, onLogout, commit }: AdminLayoutProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground dark">
       <header className="border-b border-border/50 py-4">
@@ -32,6 +33,13 @@ export function AdminLayout({ children, onLogout }: AdminLayoutProps) {
         </div>
       </header>
       <main className="flex-1 container mx-auto px-6 py-8">{children}</main>
+      {commit && (
+        <footer className="border-t border-border/50 py-3">
+          <p className="container mx-auto px-6 text-[10px] tracking-widest uppercase text-muted-foreground/50 font-mono">
+            {commit}
+          </p>
+        </footer>
+      )}
     </div>
   );
 }
