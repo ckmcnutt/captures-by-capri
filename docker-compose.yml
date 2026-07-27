@@ -1,6 +1,58 @@
 name: capri
 
 services:
+  app:
+    build:
+      context: .
+      args:
+        # Baked into the SPA bundle at build time -- changing these requires
+        # `docker compose up -d --build`, not just a restart.
+        BASE_PATH: ${BASE_PATH:-/}
+        CAL_URL: ${CAL_URL:-https://cal.com/capturesbycapri/appointment}
+    restart: unless-stopped
+    environment:
+      # Always production, not passed through from .env: the image only
+      # installs production dependencies (no pino-pretty), and "production"
+      # is also what makes the admin session cookie `secure` -- correct
+      # once Caddy is in front on the LXC. Testing the admin login against
+      # this container directly over plain http://localhost will fail to
+      # persist the session for that reason; that's expected.
+      NODE_ENV: production
+      PORT: ${PORT:-3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Container-network hostname:port, not the host-mapped 5433 the root
+      # .env uses for `pnpm dev` running natively against this same Postgres.
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
+      # The bind mount below, not the host's relative ./media.
+      MEDIA_DIR: /app/media
+      # Always true: this container has no separate Vite dev server, so
+      # api-server must be the one serving the built SPA.
+      SERVE_STATIC: "true"
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-false}
+      CRON_SCHEDULE: ${CRON_SCHEDULE:-0 14 * * *}
+      CRON_TIMEZONE: ${CRON_TIMEZONE:-America/Chicago}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      CALCOM_API_KEY: ${CALCOM_API_KEY:-}
+      CAL_WEBHOOK_SECRET: ${CAL_WEBHOOK_SECRET:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}
+      ADMIN_PHONE_NUMBER: ${ADMIN_PHONE_NUMBER:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    volumes:
+      # Same directory `pnpm dev` reads MEDIA_DIR from -- one copy of the
+      # photos either way.
+      - ./media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     # Matches the Supabase-hosted version this project is migrating off (17.6.1.127),
     # so a pg_restore of the production dump behaves identically.

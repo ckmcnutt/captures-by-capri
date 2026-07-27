@@ -65,6 +65,30 @@ Images are served from `MEDIA_DIR` (default `./media`), which mirrors the old
 Supabase `Photos` bucket. Until you populate it, image requests 404 harmlessly —
 see [Media files](#media-files).
 
+## Running everything with Docker
+
+`docker-compose.yml` also has an `app` service: a container image (built from
+the root `Dockerfile`) that runs api-server with `SERVE_STATIC=true`, serving
+the API, `/media`, and the built SPA on one port — no separate Vite process.
+
+```bash
+cp .env.example .env          # then fill in ADMIN_PASSWORD and SESSION_SECRET
+docker compose up -d --build  # postgres, pgadmin, and the app, all in containers
+pnpm db:migrate                # schema — still runs from the host, against :5433
+pnpm db:seed
+```
+
+Open <http://localhost:3000>. This is the same build the LXC eventually runs, so
+`NODE_ENV` is always `production` inside the container regardless of `.env` —
+which also means the admin session cookie is `secure` and won't persist over
+plain `http://localhost`. Use `pnpm dev` (native, not containerized) to test the
+admin login locally.
+
+`BASE_PATH` and `CAL_URL` are baked into the SPA bundle at build time, not read
+from the container's environment — changing them needs `--build`, not just a
+restart. Everything else in `.env` is read at container start, same as `pnpm
+dev`. `./media` is bind-mounted in, so it's the same photos either way.
+
 ## Environment
 
 Every variable is documented in [`.env.example`](.env.example). One `.env` at the
