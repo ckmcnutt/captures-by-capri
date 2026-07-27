@@ -75,8 +75,12 @@ const schema = z.object({
   CRON_SCHEDULE: z.string().default("0 14 * * *"),
   CRON_TIMEZONE: z.string().default("America/Chicago"),
 
-  // Third-party integrations. All optional: each lib degrades to a warn-and-skip
-  // when unconfigured, which is what makes local testing safe.
+  // Third-party integrations. Optional in the type so local dev never needs real
+  // credentials — most libs degrade to a warn-and-skip when unconfigured.
+  // CALCOM_API_KEY is the exception: lib/calcom.ts throws outright rather than
+  // degrading (confirm/decline/cancel all sync Cal.com's side of a booking, and
+  // there's no sane no-op for that), so it's enforced below as required whenever
+  // NODE_ENV=production.
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   CALCOM_API_KEY: z.string().optional(),
@@ -86,6 +90,17 @@ const schema = z.object({
   TWILIO_PHONE_NUMBER: z.string().optional(),
   ADMIN_PHONE_NUMBER: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === "production" && !data.CALCOM_API_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["CALCOM_API_KEY"],
+      message:
+        "CALCOM_API_KEY is required when NODE_ENV=production. Confirming, " +
+        "declining, and canceling Cal.com bookings all call it with no " +
+        "fallback — get a key from Cal.com Settings -> Developer -> API keys.",
+    });
+  }
 });
 
 const parsed = schema.safeParse(process.env);
