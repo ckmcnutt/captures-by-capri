@@ -161,8 +161,8 @@ export async function getCalBookingUid(id: number): Promise<string | null> {
  * the id sequence is never advanced for those rows. Left alone, `max(id)`
  * eventually outruns the sequence and the next sequence-driven insert collides.
  * So the sequence is fast-forwarded in the same transaction whenever an explicit
- * id is supplied. `GREATEST(last_value, max(id))` never moves it backwards, so
- * this is safe to run unconditionally.
+ * id is supplied, mirroring db/sql/110_sync_sequences.sql: `GREATEST(max(id), 1)`
+ * handles the empty-table case and is safe to run unconditionally.
  */
 export async function insertAppointment(
   values: AppointmentInsert,
@@ -174,13 +174,14 @@ export async function insertAppointment(
       .returning({ id: appointment.id });
 
     if (values.id !== undefined) {
+      // No hardcoded sequence name: this table's sequence carries its original
+      // Prisma/Supabase name (see the capital-A fkey comment on the `appointment`
+      // table below), not the lowercase `appointment_id_seq` Postgres' default
+      // naming would suggest. pg_get_serial_sequence resolves the real name.
       await tx.execute(sql`
         SELECT setval(
           pg_get_serial_sequence('appointment', 'id'),
-          GREATEST(
-            (SELECT last_value FROM appointment_id_seq),
-            (SELECT COALESCE(MAX(id), 1) FROM appointment)
-          )
+          GREATEST((SELECT COALESCE(MAX(id), 1) FROM appointment), 1)
         )
       `);
     }
