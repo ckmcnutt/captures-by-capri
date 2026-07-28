@@ -52,3 +52,4 @@ Thumbs.db
 # DB dumps and extracted seed data — contain customer PII
 /db/dump/
 /db/seed/
+*.dump
