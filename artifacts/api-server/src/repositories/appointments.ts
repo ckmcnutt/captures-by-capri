@@ -1,6 +1,6 @@
 import { desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { appointment, type AppointmentInsert } from "../db/schema";
+import { appointment, appointment_status, type AppointmentInsert } from "../db/schema";
 
 /**
  * The column set the admin dashboard consumes. Previously copy-pasted in three
@@ -143,6 +143,28 @@ export async function findByPaymentLinkId(
     invoiceType:
       row.stripe_deposit_invoice_id === paymentLinkId ? "deposit" : "final",
   };
+}
+
+/**
+ * Current status name for one appointment, or null if it doesn't exist.
+ *
+ * Lets a caller check a precondition before acting — the Stripe webhook uses
+ * this to make handleDepositPaid/handleFinalPaid no-ops on a duplicate or
+ * retried delivery, instead of re-applying a transition (and re-confirming
+ * with Cal.com) that already happened on an earlier delivery of the same
+ * event.
+ */
+export async function getStatusName(id: number): Promise<string | null> {
+  const [row] = await db
+    .select({ status_name: appointment_status.status_name })
+    .from(appointment)
+    .innerJoin(
+      appointment_status,
+      eq(appointment.status_id, appointment_status.id),
+    )
+    .where(eq(appointment.id, id))
+    .limit(1);
+  return row?.status_name ?? null;
 }
 
 export async function getCalBookingUid(id: number): Promise<string | null> {

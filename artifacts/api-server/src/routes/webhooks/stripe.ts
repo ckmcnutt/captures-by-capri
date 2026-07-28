@@ -6,13 +6,41 @@ import { stripe } from "../../lib/stripe";
 import {
   findByPaymentLinkId,
   getCalBookingUid,
+  getStatusName,
   setStatus,
 } from "../../repositories/appointments";
 import { STATUS, getStatusId } from "../../repositories/status";
 
 const router = Router();
 
+/**
+ * Both handlers below check the appointment's current status before doing
+ * anything, and no-op if it doesn't match the expected precondition.
+ *
+ * Stripe retries webhook deliveries that don't return 2xx, and a single
+ * successful payment can emit more than one event type (checkout.session and
+ * payment_intent). Without this guard, a duplicate delivery would re-run
+ * confirmCalBooking against an already-confirmed Cal.com booking — which, if
+ * Cal.com rejects the redundant confirm with a non-2xx, throws, 500s this
+ * handler, and gets Stripe retrying indefinitely. Checking status first turns
+ * a duplicate delivery into a safe no-op instead.
+ *
+ * This doesn't close every race (two deliveries landing at truly the same
+ * instant could both read the pre-transition status before either writes),
+ * but that's a far smaller window than the retry-driven duplicates this is
+ * actually guarding against.
+ */
+
 async function handleDepositPaid(appointmentId: number): Promise<void> {
+  const currentStatus = await getStatusName(appointmentId);
+  if (currentStatus !== STATUS.depositRequested) {
+    logger.info(
+      { appointmentId, currentStatus },
+      "Deposit-paid webhook ignored — appointment isn't awaiting a deposit (already processed, or a duplicate delivery)",
+    );
+    return;
+  }
+
   const calBookingUid = await getCalBookingUid(appointmentId);
 
   if (calBookingUid) {
@@ -32,6 +60,15 @@ async function handleDepositPaid(appointmentId: number): Promise<void> {
 }
 
 async function handleFinalPaid(appointmentId: number): Promise<void> {
+  const currentStatus = await getStatusName(appointmentId);
+  if (currentStatus !== STATUS.invoiceSent) {
+    logger.info(
+      { appointmentId, currentStatus },
+      "Final-invoice-paid webhook ignored — appointment isn't awaiting final payment (already processed, or a duplicate delivery)",
+    );
+    return;
+  }
+
   await setStatus(appointmentId, await getStatusId(STATUS.invoicePaid));
   logger.info({ appointmentId }, "Final invoice paid — status set to invoice_paid");
 }
