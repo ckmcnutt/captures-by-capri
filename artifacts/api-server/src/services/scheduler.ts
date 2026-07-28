@@ -15,9 +15,12 @@ import { runScheduledJobs } from "./scheduled-jobs";
  * send every reminder up to 24 times — real Twilio spend and real annoyance for
  * clients. Getting finer resolution requires a schema change (a
  * last_reminder_sent_at column), not a config change.
+ *
+ * Overlap protection (a run must not overlap itself, or a previous tick, or a
+ * concurrent manual trigger) lives in runScheduledJobs() itself now, not here
+ * — it's shared with POST /api/jobs/run, which calls the same function.
  */
 let task: ScheduledTask | null = null;
-let running = false;
 
 export function startScheduler(): void {
   if (task) {
@@ -32,13 +35,6 @@ export function startScheduler(): void {
   task = cron.schedule(
     env.CRON_SCHEDULE,
     async () => {
-      // A run that outlives its interval must not overlap itself: the jobs are
-      // not idempotent, so a second concurrent pass would double-send.
-      if (running) {
-        logger.warn("Scheduled jobs still running from a previous tick — skipping");
-        return;
-      }
-      running = true;
       const startedAt = Date.now();
       try {
         const result = await runScheduledJobs(logger);
@@ -48,8 +44,6 @@ export function startScheduler(): void {
         );
       } catch (err) {
         logger.error({ err }, "Scheduled jobs failed");
-      } finally {
-        running = false;
       }
     },
     { timezone: env.CRON_TIMEZONE },

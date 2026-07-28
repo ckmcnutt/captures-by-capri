@@ -34,7 +34,35 @@ export interface ScheduledJobsResult {
   errors: string[];
 }
 
+/**
+ * Guards against overlapping runs. Lives here rather than in scheduler.ts so
+ * the lock is shared by both callers — the cron tick AND the manually
+ * triggered `POST /api/jobs/run` — instead of only protecting the cron
+ * against itself. Two overlapping runs would double-send reminders and could
+ * create two separate Stripe payment links for the same appointment, since
+ * nothing else in this file is idempotent (see the module doc above).
+ */
+let running = false;
+
 export async function runScheduledJobs(
+  log: Logger,
+): Promise<ScheduledJobsResult> {
+  if (running) {
+    log.warn("Scheduled jobs already running — skipping this invocation");
+    return {
+      processed: 0,
+      errors: ["Scheduled jobs already running — skipped to avoid double-sending"],
+    };
+  }
+  running = true;
+  try {
+    return await runScheduledJobsInner(log);
+  } finally {
+    running = false;
+  }
+}
+
+async function runScheduledJobsInner(
   log: Logger,
 ): Promise<ScheduledJobsResult> {
   const errors: string[] = [];

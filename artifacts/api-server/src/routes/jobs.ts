@@ -6,10 +6,13 @@ const router = Router();
 
 /**
  * Manually trigger the scheduled jobs. Same code path the cron tick uses, so
- * there is exactly one implementation.
+ * there is exactly one implementation — including the overlap guard, which
+ * runScheduledJobs() enforces itself so this route can't race a concurrent
+ * cron tick (or another manual call) into double-sending.
  *
- * NOT idempotent — it sends real SMS and email. When testing, leave the Twilio
- * credentials and SMTP_HOST unset: both transports degrade to a warn-and-skip.
+ * Still not idempotent across separate (non-overlapping) runs — it sends real
+ * SMS and email. When testing, leave the Twilio credentials and SMTP_HOST
+ * unset: both transports degrade to a warn-and-skip.
  */
 router.post("/run", isAdmin, async (req, res): Promise<void> => {
   try {
