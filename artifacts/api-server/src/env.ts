@@ -89,7 +89,24 @@ const schema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_PHONE_NUMBER: z.string().optional(),
   ADMIN_PHONE_NUMBER: z.string().optional(),
-  RESEND_API_KEY: z.string().optional(),
+
+  // SMTP (client email), via an existing mailbox rather than a dedicated
+  // sending API. See lib/email.ts for why: the previous provider (Resend)
+  // required a domain-wide MX record that broke inbound mail for every other
+  // mailbox on the domain.
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  // true for port 465 (implicit TLS); false (default, port 587) negotiates
+  // TLS via STARTTLS instead. Most providers, including Namecheap Private
+  // Email, expect 587/STARTTLS.
+  SMTP_SECURE: boolFromEnv(false),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  // "Display Name <address>". Defaults to SMTP_USER unadorned if unset. Most
+  // SMTP providers reject a From address that isn't the authenticated
+  // mailbox (or a verified alias of it), so this generally can't diverge
+  // from SMTP_USER's domain.
+  SMTP_FROM: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === "production" && !data.CALCOM_API_KEY) {
     ctx.addIssue({

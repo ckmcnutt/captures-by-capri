@@ -8,8 +8,8 @@ const router = Router();
  * Manually trigger the scheduled jobs. Same code path the cron tick uses, so
  * there is exactly one implementation.
  *
- * NOT idempotent — it sends real SMS and email. When testing, leave the Twilio and
- * Resend keys unset: both transports degrade to a warn-and-skip.
+ * NOT idempotent — it sends real SMS and email. When testing, leave the Twilio
+ * credentials and SMTP_HOST unset: both transports degrade to a warn-and-skip.
  */
 router.post("/run", isAdmin, async (req, res): Promise<void> => {
   try {

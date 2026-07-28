@@ -1,34 +1,54 @@
+import nodemailer, { type Transporter } from "nodemailer";
+import { env } from "../env";
 import { logger } from "./logger";
 
-const RESEND_API_URL = "https://api.resend.com/emails";
-const FROM_ADDRESS = "Captures By Capri <bookings@capturesbycapri.com>";
+/**
+ * Sends client email over SMTP through an existing mailbox, rather than a
+ * dedicated transactional-email API (previously Resend).
+ *
+ * Resend's domain verification required a domain-wide MX record, which
+ * overrides whatever MX the domain's other mailboxes rely on for inbound
+ * mail — that's what broke madison@capturesbycapri.com. Authenticating as an
+ * existing mailbox over SMTP only sends outbound mail; it never touches the
+ * MX record, so every other mailbox on the domain is unaffected.
+ */
+let transporter: Transporter | null = null;
 
+function getTransporter(): Transporter | null {
+  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASSWORD) return null;
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_SECURE,
+      auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
+    });
+  }
+  return transporter;
+}
+
+/**
+ * Swallows failures rather than throwing, same as the Resend implementation
+ * it replaces — a broken mail transport shouldn't roll back whatever
+ * database change already committed. (sendSms is the opposite on purpose:
+ * see lib/twilio.ts.)
+ */
 export async function sendEmail(to: string, subject: string, text: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    logger.warn({ to, subject }, "RESEND_API_KEY not configured — email not sent");
+  const transport = getTransporter();
+  if (!transport) {
+    logger.warn({ to, subject }, "SMTP is not configured — email not sent");
     return;
   }
 
-  const res = await fetch(RESEND_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: FROM_ADDRESS,
-      to: [to],
+  try {
+    await transport.sendMail({
+      from: env.SMTP_FROM || env.SMTP_USER,
+      to,
       subject,
       text,
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    logger.warn({ to, subject, status: res.status, body }, "Resend email failed — notification not delivered");
-    return;
+    });
+    logger.info({ to, subject }, "Email sent via SMTP");
+  } catch (err) {
+    logger.warn({ to, subject, err }, "SMTP send failed — notification not delivered");
   }
-
-  logger.info({ to, subject }, "Email sent via Resend");
 }

@@ -14,7 +14,7 @@ Finer resolution needs a schema change (a `last_reminder_sent_at` column), not a
 config change.
 
 `POST /api/jobs/run` is likewise not idempotent. When testing, leave
-`TWILIO_*` and `RESEND_API_KEY` unset: both transports degrade to a
+`TWILIO_*` and `SMTP_HOST` unset: both transports degrade to a
 warn-and-skip.
 
 ## `appointment.id` is both a serial PK and a Cal.com bookingId sink
