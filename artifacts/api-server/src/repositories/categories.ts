@@ -8,11 +8,15 @@ export async function listCategories(): Promise<CategoryRow[]> {
 /**
  * Match a Cal.com `session_type` answer to a category.
  *
- * Behaviour preserved verbatim from the Supabase edge function, including its
- * quirk: it tests whether the CATEGORY name contains the SESSION TYPE, so a short
- * session type can match an unrelated longer category name. Deliberately not
- * "fixed" here — that is a behaviour change and belongs in its own commit with
- * the real category list in hand. Callers log when this returns null.
+ * Checks containment in both directions. The original (Supabase edge function)
+ * behaviour only checked CATEGORY name contains SESSION TYPE, which silently
+ * broke in production: real category names are short single words ("other"),
+ * but Cal.com's dropdown sends the full option label for at least one of them
+ * ("Other (Specify in Additional Notes)") — longer than "other", so "other"
+ * can never contain it. Every appointment with that session_type fell through
+ * to the categories[0] fallback below instead of matching "other".
+ *
+ * Callers log when this returns null.
  */
 export function matchCategory(
   categories: CategoryRow[],
@@ -21,8 +25,9 @@ export function matchCategory(
   const needle = sessionType.trim().toLowerCase();
   if (!needle) return null;
   return (
-    categories.find((c) =>
-      c.category_name?.toLowerCase().includes(needle),
-    ) ?? null
+    categories.find((c) => {
+      const name = c.category_name?.toLowerCase();
+      return !!name && (name.includes(needle) || needle.includes(name));
+    }) ?? null
   );
 }
