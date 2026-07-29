@@ -91,6 +91,59 @@ async function resolveByPaymentLink(
   return findByPaymentLinkId(paymentLinkId);
 }
 
+function invoiceTypeFromKind(kind: string | undefined): "deposit" | "final" | null {
+  if (kind === "deposit") return "deposit";
+  if (kind === "final_30" || kind === "final_60") return "final";
+  return null;
+}
+
+/** Only the fields this resolver actually reads off a Checkout Session. */
+interface ResolvableCheckoutSession {
+  client_reference_id: string | null;
+  payment_link: string | { id: string } | null;
+  metadata: Record<string, string> | null;
+}
+
+/**
+ * Resolve which appointment a completed checkout belongs to.
+ *
+ * Payment links are now persistent and shared across many appointments (see
+ * lib/stripe.ts), so their `metadata` can no longer identify a specific
+ * appointment. Instead, every link handed to a customer has
+ * `?client_reference_id=<appointmentId>` appended (see
+ * lib/stripe.ts#appendClientReference), which Stripe threads onto the
+ * resulting Checkout Session — `session.client_reference_id` here. The kind
+ * of link (`deposit` | `final_30` | `final_60`), needed to know which
+ * transition to run, comes from the static `metadata.kind` set on the
+ * Payment Link itself, which does propagate to `session.metadata`.
+ *
+ * A session with no `client_reference_id` predates this migration (a legacy
+ * one-off per-appointment link still in flight) — those fall back to the
+ * original 1:1 `findByPaymentLinkId`/metadata lookup, which is still correct
+ * for them since they were never shared.
+ */
+async function resolveCheckoutSession(
+  session: ResolvableCheckoutSession,
+): Promise<{ appointmentId: number; invoiceType: "deposit" | "final" } | null> {
+  const refId = session.client_reference_id
+    ? parseInt(session.client_reference_id, 10)
+    : NaN;
+
+  if (!Number.isNaN(refId)) {
+    const invoiceType = invoiceTypeFromKind(session.metadata?.kind);
+    if (invoiceType) return { appointmentId: refId, invoiceType };
+  }
+
+  const byLink = await resolveByPaymentLink(session.payment_link as string | null);
+  if (byLink) return byLink;
+
+  const { appointmentId, invoiceType } = extractMetadata(session.metadata);
+  if (appointmentId && (invoiceType === "deposit" || invoiceType === "final")) {
+    return { appointmentId, invoiceType };
+  }
+  return null;
+}
+
 router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
   if (!env.STRIPE_WEBHOOK_SECRET) {
     logger.error("STRIPE_WEBHOOK_SECRET is not configured");
@@ -130,17 +183,12 @@ router.post("/stripe", async (req: Request, res: Response): Promise<void> => {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      // Payment-link id is the reliable route; metadata is the fallback.
-      const byLink = await resolveByPaymentLink(
-        session.payment_link as string | null,
-      );
-      const { appointmentId, invoiceType } =
-        byLink ?? extractMetadata(session.metadata);
+      const resolved = await resolveCheckoutSession(session);
 
-      if (appointmentId && invoiceType === "deposit") {
-        await handleDepositPaid(appointmentId);
-      } else if (appointmentId && invoiceType === "final") {
-        await handleFinalPaid(appointmentId);
+      if (resolved?.invoiceType === "deposit") {
+        await handleDepositPaid(resolved.appointmentId);
+      } else if (resolved?.invoiceType === "final") {
+        await handleFinalPaid(resolved.appointmentId);
       }
     } else if (event.type === "payment_intent.succeeded") {
       const intent = event.data.object;

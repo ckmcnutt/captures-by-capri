@@ -5,6 +5,7 @@ import { checkPassword, clearSession, issueSession } from "../../lib/session";
 import { isAdmin } from "../../middleware/auth";
 import actionsRouter from "./actions";
 import appointmentsRouter from "./appointments";
+import pricingRouter from "./pricing";
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.get("/me", isAdmin, (_req, res): void => {
 
 router.use(appointmentsRouter);
 router.use(actionsRouter);
+router.use(pricingRouter);
 
 export default router;

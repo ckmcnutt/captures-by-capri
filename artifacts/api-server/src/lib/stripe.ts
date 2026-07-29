@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import type { PricingKind } from "../repositories/pricing";
 import { logger } from "./logger";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -11,12 +12,26 @@ export const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, { apiVersion: "2026-05-27.dahlia" })
   : null;
 
-async function createPaymentLink(
-  appointmentId: number,
+/**
+ * Create one persistent Stripe Price + Payment Link for a pricing kind
+ * (`deposit` | `final_30` | `final_60`).
+ *
+ * Unlike the old per-appointment links, this is called only from the admin
+ * pricing page when a price changes — the resulting link is shared by every
+ * appointment confirmed/invoiced afterwards, until the next price change. The
+ * previous Price/Link for this kind is deliberately left active: appointments
+ * created while it was current keep referencing it indefinitely (see
+ * repositories/pricing.ts callers).
+ *
+ * `metadata.kind` on the Payment Link propagates to the resulting Checkout
+ * Session's metadata, which is how the webhook recovers deposit-vs-final
+ * without a database round trip.
+ */
+export async function createPersistentPriceAndLink(
+  kind: PricingKind,
   amountCents: number,
   productName: string,
-  invoiceType: "deposit" | "final"
-): Promise<{ url: string; id: string }> {
+): Promise<{ priceId: string; linkId: string; url: string }> {
   if (!stripe) {
     throw new Error("Stripe is not configured (STRIPE_SECRET_KEY missing)");
   }
@@ -29,28 +44,24 @@ async function createPaymentLink(
 
   const paymentLink = await stripe.paymentLinks.create({
     line_items: [{ price: price.id, quantity: 1 }],
-    metadata: {
-      appointmentId: String(appointmentId),
-      invoiceType,
-    },
+    metadata: { kind },
   });
 
-  return { url: paymentLink.url, id: paymentLink.id };
+  logger.info(
+    { kind, amountCents, priceId: price.id, paymentLinkId: paymentLink.id },
+    "Stripe persistent payment link created",
+  );
+
+  return { priceId: price.id, linkId: paymentLink.id, url: paymentLink.url };
 }
 
-export async function createDepositPaymentLink(
-  appointmentId: number
-): Promise<{ url: string; id: string }> {
-  const result = await createPaymentLink(appointmentId, 2000, "Photography Session Deposit", "deposit");
-  logger.info({ appointmentId, paymentLinkId: result.id }, "Stripe deposit payment link created");
-  return result;
-}
-
-export async function createFinalPaymentLink(
-  appointmentId: number,
-  amountCents: number
-): Promise<{ url: string; id: string }> {
-  const result = await createPaymentLink(appointmentId, amountCents, "Photography Session Final Invoice", "final");
-  logger.info({ appointmentId, amountCents, paymentLinkId: result.id }, "Stripe final payment link created");
-  return result;
+/**
+ * Attach an appointment id to a shared payment link URL so the webhook can
+ * tell which appointment a given checkout belongs to. Stripe threads this
+ * through to the resulting Checkout Session as `client_reference_id`.
+ */
+export function appendClientReference(url: string, appointmentId: number): string {
+  const withParam = new URL(url);
+  withParam.searchParams.set("client_reference_id", String(appointmentId));
+  return withParam.toString();
 }

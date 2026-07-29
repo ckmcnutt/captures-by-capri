@@ -22,14 +22,28 @@ export function AdminLayout({ children, onLogout, commit }: AdminLayoutProps) {
               Admin
             </span>
           </Link>
-          {onLogout && (
-            <button
-              onClick={onLogout}
+          <div className="flex items-center gap-6">
+            <Link
+              href="/admin"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase"
             >
-              Logout
-            </button>
-          )}
+              Appointments
+            </Link>
+            <Link
+              href="/admin/pricing"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase"
+            >
+              Pricing
+            </Link>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase"
+              >
+                Logout
+              </button>
+            )}
+          </div>
         </div>
       </header>
       <main className="flex-1 container mx-auto px-6 py-8">{children}</main>
