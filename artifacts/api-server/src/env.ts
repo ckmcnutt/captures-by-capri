@@ -89,6 +89,9 @@ const schema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_PHONE_NUMBER: z.string().optional(),
   ADMIN_PHONE_NUMBER: z.string().optional(),
+  // Carrier lookup for texting clients via their carrier's SMS-to-email
+  // gateway (see lib/carrier-lookup.ts). Free tier at abstractapi.com.
+  ABSTRACT_API_KEY: z.string().optional(),
 
   // SMTP (client email), via an existing mailbox rather than a dedicated
   // sending API. See lib/email.ts for why: the previous provider (Resend)

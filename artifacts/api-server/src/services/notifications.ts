@@ -1,6 +1,8 @@
 import { env } from "../env";
+import { gatewayDomainForCarrier, lookupCarrier } from "../lib/carrier-lookup";
 import { sendEmail } from "../lib/email";
 import { logger } from "../lib/logger";
+import { normalizeUsPhoneDigits } from "../lib/phone";
 import { sendSms } from "../lib/twilio";
 
 /** The customer fields any notification needs. */
@@ -30,10 +32,41 @@ export async function notifyClient(
   subject: string = DEFAULT_SUBJECT,
 ): Promise<void> {
   if (customer.preferred_contact_method === "sms") {
-    await sendSms(customer.phone_number, message);
+    await sendTextViaCarrierGateway(customer.phone_number, message);
   } else {
     await sendEmail(customer.email_address, subject, message);
   }
+}
+
+/**
+ * "Texts" a customer by emailing their carrier's SMS gateway address (e.g.
+ * 5555550100@vtext.com) instead of sending through a paid SMS API. The
+ * carrier has to be looked up rather than guessed from the number, since
+ * numbers get ported between carriers and the area code/prefix stops being
+ * a reliable signal once that happens.
+ *
+ * Degrades to a warn-and-skip at every step (bad number, no API key, unknown
+ * carrier), matching the rest of this file. Subject is intentionally blank:
+ * carrier gateways fold it into the text body inconsistently across
+ * carriers, and a real SMS never had a subject line to begin with.
+ */
+async function sendTextViaCarrierGateway(phoneNumber: string, message: string): Promise<void> {
+  const digits = normalizeUsPhoneDigits(phoneNumber);
+  if (!digits) {
+    logger.warn({ phoneNumber }, "Not a 10-digit US number — can't text via carrier gateway");
+    return;
+  }
+
+  const carrier = await lookupCarrier(`+1${digits}`);
+  if (!carrier) return;
+
+  const domain = gatewayDomainForCarrier(carrier);
+  if (!domain) {
+    logger.warn({ carrier }, "No known SMS gateway domain for this carrier — text not sent");
+    return;
+  }
+
+  await sendEmail(`${digits}@${domain}`, "", message);
 }
 
 /** Send an SMS to the photographer. No-ops with a warning when unset. */
