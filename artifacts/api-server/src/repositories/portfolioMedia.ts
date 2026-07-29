@@ -35,7 +35,7 @@ export async function listPortfolioCategories(): Promise<PortfolioCategory[]> {
   }
 
   const categoryDirs = entries
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return Promise.all(
@@ -47,6 +47,13 @@ export async function listPortfolioCategories(): Promise<PortfolioCategory[]> {
         .filter(
           (file) =>
             file.isFile() &&
+            // Excludes .DS_Store and, more importantly, the AppleDouble
+            // sidecar files (`._IMG_1234.jpg`) macOS silently creates
+            // whenever photos are copied to a non-Mac filesystem (scp/rsync
+            // to this ext4 host, a zip round-trip, etc). Those carry a real
+            // image extension but aren't valid images, so counting them
+            // doubles the photo count with the second half rendering broken.
+            !file.name.startsWith(".") &&
             IMAGE_EXTENSIONS.has(path.extname(file.name).toLowerCase()),
         )
         .map((file) => file.name)
