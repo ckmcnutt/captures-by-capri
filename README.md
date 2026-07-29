@@ -253,7 +253,7 @@ Fill in `.env`: `ADMIN_PASSWORD`, `SESSION_SECRET`, `POSTGRES_*`,
 it survives `docker compose down`), and `HOST_MEDIA_DIR` pointing at the
 Proxmox mp0 mount — see [Media files](#media-files). Also set
 `NODE_ENV=production`, `ENABLE_SCHEDULER=true`, `CAL_WEBHOOK_SECRET`, and the
-Stripe/Cal/Twilio/SMTP credentials.
+Stripe/Cal/SMTP credentials, plus `ABSTRACT_API_KEY` for carrier lookup.
 
 ```bash
 GIT_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build
@@ -301,8 +301,8 @@ see `/api/admin/me` in the [API](#api) table.
 a full 24 hours wide and nothing records that a reminder was already sent, so an
 hourly schedule sends every reminder up to 24 times. Finer resolution needs a
 schema change, not a config change. `POST /api/jobs/run` is not idempotent either
-— test with `TWILIO_*` and `SMTP_HOST` unset, where both transports degrade to a
-warn-and-skip.
+— test with `ABSTRACT_API_KEY` and `SMTP_HOST` unset, where both transports
+degrade to a warn-and-skip.
 
 **`appointment.id` is both a serial PK and a Cal.com bookingId sink.** Webhook
 rows set the id explicitly, which never advances the sequence, so

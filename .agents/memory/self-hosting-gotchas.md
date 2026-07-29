@@ -8,14 +8,26 @@ Replit + Supabase. Each of these is silent — nothing fails loudly.
 The reminder windows in `services/scheduled-jobs.ts` (`d <= 3 && d > 2`,
 `d <= 2 && d > 1`, `d <= 1 && d > 0`) are each a full 24-hour band, and no column
 records that a reminder was already sent. An hourly schedule sends every reminder
-up to 24 times — real Twilio spend, real annoyance for clients.
+up to 24 times — real annoyance for clients getting the same reminder repeatedly.
 
 Finer resolution needs a schema change (a `last_reminder_sent_at` column), not a
 config change.
 
 `POST /api/jobs/run` is likewise not idempotent. When testing, leave
-`TWILIO_*` and `SMTP_HOST` unset: both transports degrade to a
+`ABSTRACT_API_KEY` and `SMTP_HOST` unset: both transports degrade to a
 warn-and-skip.
+
+## Texting has no SMS API — it emails carrier gateways instead
+
+There's no Twilio (or any SMS API) in this stack anymore. `notifyClient` and
+`notifyAdmin` in `services/notifications.ts` both "text" a phone number by
+looking up its carrier (`lib/carrier-lookup.ts`, via AbstractAPI's free tier)
+and emailing `<10-digit-number>@<carrier's SMS gateway domain>` (e.g.
+`5555550100@vtext.com`) over the existing SMTP transport. No per-message cost,
+but it silently degrades to a no-op if `ABSTRACT_API_KEY` is unset, the number
+isn't a plain 10-digit US number, or the carrier isn't in the gateway table in
+`lib/carrier-lookup.ts` — there's no error surfaced to the caller in any of
+those cases, by design (matches how every other transport here degrades).
 
 ## `appointment.id` is both a serial PK and a Cal.com bookingId sink
 

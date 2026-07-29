@@ -30,8 +30,9 @@ function getTransporter(): Transporter | null {
 /**
  * Swallows failures rather than throwing, same as the Resend implementation
  * it replaces — a broken mail transport shouldn't roll back whatever
- * database change already committed. (sendSms is the opposite on purpose:
- * see lib/twilio.ts.)
+ * database change already committed. This is also the transport behind
+ * carrier-gateway texts (see services/notifications.ts), so it degrades the
+ * same way for those too.
  */
 export async function sendEmail(to: string, subject: string, text: string): Promise<void> {
   const transport = getTransporter();

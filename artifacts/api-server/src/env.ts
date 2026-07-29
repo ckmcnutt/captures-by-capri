@@ -85,12 +85,11 @@ const schema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   CALCOM_API_KEY: z.string().optional(),
   CAL_WEBHOOK_SECRET: z.string().optional(),
-  TWILIO_ACCOUNT_SID: z.string().optional(),
-  TWILIO_AUTH_TOKEN: z.string().optional(),
-  TWILIO_PHONE_NUMBER: z.string().optional(),
   ADMIN_PHONE_NUMBER: z.string().optional(),
-  // Carrier lookup for texting clients via their carrier's SMS-to-email
-  // gateway (see lib/carrier-lookup.ts). Free tier at abstractapi.com.
+  // Carrier lookup for texting clients and the admin via a carrier's
+  // SMS-to-email gateway (see lib/carrier-lookup.ts). Free tier at
+  // abstractapi.com. Replaces the Twilio integration this project started
+  // with — see git history if you need it back.
   ABSTRACT_API_KEY: z.string().optional(),
 
   // SMTP (client email), via an existing mailbox rather than a dedicated

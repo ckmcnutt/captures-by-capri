@@ -3,7 +3,6 @@ import { gatewayDomainForCarrier, lookupCarrier } from "../lib/carrier-lookup";
 import { sendEmail } from "../lib/email";
 import { logger } from "../lib/logger";
 import { normalizeUsPhoneDigits } from "../lib/phone";
-import { sendSms } from "../lib/twilio";
 
 /** The customer fields any notification needs. */
 export interface NotifiableCustomer {
@@ -39,12 +38,13 @@ export async function notifyClient(
 }
 
 /**
- * "Texts" a customer by emailing their carrier's SMS gateway address (e.g.
- * 5555550100@vtext.com) instead of sending through a paid SMS API. The
- * carrier has to be looked up rather than guessed from the number, since
- * numbers get ported between carriers and the area code/prefix stops being
- * a reliable signal once that happens.
+ * "Texts" a phone number by emailing its carrier's SMS gateway address (e.g.
+ * 5555550100@vtext.com) — no SMS API or per-message cost involved, just the
+ * existing SMTP transport. The carrier has to be looked up rather than
+ * guessed from the number, since numbers get ported between carriers and
+ * the area code/prefix stops being a reliable signal once that happens.
  *
+ * Used for both client texts (notifyClient) and admin alerts (notifyAdmin).
  * Degrades to a warn-and-skip at every step (bad number, no API key, unknown
  * carrier), matching the rest of this file. Subject is intentionally blank:
  * carrier gateways fold it into the text body inconsistently across
@@ -69,7 +69,7 @@ async function sendTextViaCarrierGateway(phoneNumber: string, message: string): 
   await sendEmail(`${digits}@${domain}`, "", message);
 }
 
-/** Send an SMS to the photographer. No-ops with a warning when unset. */
+/** Text the photographer via their carrier's gateway. No-ops with a warning when unset. */
 export async function notifyAdmin(message: string): Promise<void> {
   if (!env.ADMIN_PHONE_NUMBER) {
     logger.warn(
@@ -78,7 +78,7 @@ export async function notifyAdmin(message: string): Promise<void> {
     );
     return;
   }
-  await sendSms(env.ADMIN_PHONE_NUMBER, message);
+  await sendTextViaCarrierGateway(env.ADMIN_PHONE_NUMBER, message);
 }
 
 /**

@@ -78,7 +78,8 @@ export default function Privacy() {
             <ul>
               <li><strong>Stripe</strong> — to process deposits and payments securely.</li>
               <li><strong>Cal.com</strong> — to manage appointment scheduling.</li>
-              <li><strong>Twilio</strong> — to deliver SMS notifications you have consented to receive.</li>
+              <li><strong>Your mobile carrier</strong> — SMS notifications you have consented to receive are delivered via your carrier's email-to-text gateway using the phone number you provide.</li>
+              <li><strong>Abstract API</strong> — to identify your mobile carrier so text notifications can be routed correctly.</li>
               <li><strong>Resend</strong> — to deliver transactional emails.</li>
               <li><strong>Supabase</strong> — our secure database provider for storing appointment records.</li>
             </ul>
