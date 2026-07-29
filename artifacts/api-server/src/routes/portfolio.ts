@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { listPortfolioPhotos } from "../repositories/photos";
+import { listPortfolioCategories } from "../repositories/portfolioMedia";
 
 const router = Router();
 
 router.get("/portfolio", async (req, res): Promise<void> => {
   try {
-    res.json(await listPortfolioPhotos());
+    res.json(await listPortfolioCategories());
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch portfolio photos");
-    res.status(500).json({ error: "Failed to fetch portfolio photos" });
+    req.log.error({ err }, "Failed to list portfolio photos");
+    res.status(500).json({ error: "Failed to list portfolio photos" });
   }
 });
 

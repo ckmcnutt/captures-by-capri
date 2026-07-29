@@ -4,7 +4,6 @@ import {
   appointment_status,
   category,
   customer,
-  photo,
 } from "./schema";
 
 /**
@@ -28,18 +27,6 @@ export const appointmentRelations = relations(appointment, ({ one, many }) => ({
     fields: [appointment.status_id],
     references: [appointment_status.id],
   }),
-  photos: many(photo),
-}));
-
-export const photoRelations = relations(photo, ({ one }) => ({
-  category: one(category, {
-    fields: [photo.category_id],
-    references: [category.id],
-  }),
-  appointment: one(appointment, {
-    fields: [photo.appointment_id],
-    references: [appointment.id],
-  }),
 }));
 
 export const customerRelations = relations(customer, ({ many }) => ({
@@ -48,7 +35,6 @@ export const customerRelations = relations(customer, ({ many }) => ({
 
 export const categoryRelations = relations(category, ({ many }) => ({
   appointments: many(appointment),
-  photos: many(photo),
 }));
 
 export const appointmentStatusRelations = relations(

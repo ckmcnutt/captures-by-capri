@@ -5,7 +5,6 @@
 #
 #   drizzle migrations build the schema
 #   -> db/seed/data.sql loads real data if present, else db:seed loads lookups
-#   -> photo URLs rewritten to /media/
 #   -> sequences fast-forwarded
 #
 # The production cutover path is different: pg_restore the full dump, then
@@ -26,9 +25,6 @@ else
   echo "==> No db/seed/data.sql; seeding lookup tables only"
   pnpm --filter @workspace/api-server run db:seed
 fi
-
-echo "==> Rewriting photo URLs to /media/"
-docker compose exec -T postgres psql -U capri -d capri -q -f /db/sql/100_rewrite_photo_urls.sql
 
 echo "==> Syncing sequences"
 docker compose exec -T postgres psql -U capri -d capri -q -f /db/sql/110_sync_sequences.sql

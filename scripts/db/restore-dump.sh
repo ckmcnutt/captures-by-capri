@@ -71,7 +71,6 @@ cat <<'EOF'
      (not GENERATED ALWAYS), and check the timestamp and numeric types.
   2. Generate the Drizzle schema from what you actually got:
        pnpm db:pull
-  3. Rewrite photo URLs and sync sequences:
-       pnpm db:psql -f /db/sql/100_rewrite_photo_urls.sql
+  3. Sync sequences:
        pnpm db:psql -f /db/sql/110_sync_sequences.sql
 EOF

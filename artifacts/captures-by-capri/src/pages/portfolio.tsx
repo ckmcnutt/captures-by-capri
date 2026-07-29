@@ -2,15 +2,23 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
-interface Photo {
-  id: number;
+interface PortfolioPhoto {
+  filename: string;
   url: string;
-  title: string | null;
-  category: { category_name: string } | null;
+}
+
+interface PortfolioCategory {
+  name: string;
+  photos: PortfolioPhoto[];
+}
+
+/** "wedding-day" -> "Wedding Day", for a category directory name. */
+function formatCategoryLabel(name: string): string {
+  return name.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function Portfolio() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [categories, setCategories] = useState<PortfolioCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -22,8 +30,8 @@ export default function Portfolio() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((data: Photo[]) => {
-        setPhotos(data);
+      .then((data: PortfolioCategory[]) => {
+        setCategories(data);
         setLoading(false);
       })
       .catch(() => {
@@ -32,17 +40,8 @@ export default function Portfolio() {
       });
   }, []);
 
-  const categories = Array.from(
-    new Set(
-      photos
-        .map((p) => p.category?.category_name)
-        .filter((n): n is string => !!n)
-    )
-  ).sort();
-
-  const filteredPhotos = selectedCategory
-    ? photos.filter((p) => p.category?.category_name === selectedCategory)
-    : [];
+  const filteredPhotos =
+    categories.find((c) => c.name === selectedCategory)?.photos ?? [];
 
   return (
     <div className="min-h-screen pt-32 pb-24 px-6">
@@ -72,15 +71,15 @@ export default function Portfolio() {
             <div className="flex flex-wrap justify-center gap-6 md:gap-12 mb-16">
               {categories.map((cat) => (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  key={cat.name}
+                  onClick={() => setSelectedCategory(cat.name)}
                   className={`text-sm tracking-widest uppercase transition-all pb-1 border-b ${
-                    selectedCategory === cat
+                    selectedCategory === cat.name
                       ? "border-foreground text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {cat}
+                  {formatCategoryLabel(cat.name)}
                 </button>
               ))}
             </div>
@@ -125,7 +124,7 @@ export default function Portfolio() {
               <AnimatePresence mode="popLayout">
                 {filteredPhotos.map((photo) => (
                   <motion.div
-                    key={photo.id}
+                    key={photo.filename}
                     layout
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -136,7 +135,7 @@ export default function Portfolio() {
                   >
                     <img
                       src={photo.url}
-                      alt={photo.title ?? ""}
+                      alt={selectedCategory ? formatCategoryLabel(selectedCategory) : ""}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   </motion.div>

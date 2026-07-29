@@ -11,7 +11,7 @@ import "../env";
 import { sql } from "drizzle-orm";
 import { closeDb, db } from "./client";
 import { logger } from "../lib/logger";
-import { appointment_status, category, photo } from "./schema";
+import { appointment_status, category } from "./schema";
 import { STATUS } from "../repositories/status";
 
 /**
@@ -44,25 +44,6 @@ const CATEGORIES: Array<{ id: number; category_name: string; category_desc: stri
     { id: 5, category_name: "Event", category_desc: "Event coverage" },
   ];
 
-/**
- * A few portfolio rows so /api/portfolio and the portfolio page render on a
- * fresh database. Paths point at MEDIA_DIR; they 404 harmlessly until the Photos
- * bucket is mirrored locally.
- */
-const PHOTOS: Array<{
-  id: number;
-  url: string;
-  title: string;
-  category_id: number;
-  featured_portfolio: boolean;
-  featured_homepage: boolean;
-}> = [
-  { id: 1, url: "/media/home/feature1.jpg", title: "Family", category_id: 2, featured_portfolio: true, featured_homepage: true },
-  { id: 2, url: "/media/home/feature2.jpg", title: "Portrait", category_id: 1, featured_portfolio: true, featured_homepage: true },
-  { id: 3, url: "/media/home/feature3.JPG", title: "Couple", category_id: 3, featured_portfolio: true, featured_homepage: true },
-  { id: 4, url: "/media/home/feature4.jpg", title: "Engagement", category_id: 4, featured_portfolio: true, featured_homepage: true },
-];
-
 async function main(): Promise<void> {
   logger.info("Seeding lookup tables");
 
@@ -76,11 +57,9 @@ async function main(): Promise<void> {
     .values(CATEGORIES)
     .onConflictDoNothing({ target: category.id });
 
-  await db.insert(photo).values(PHOTOS).onConflictDoNothing({ target: photo.id });
-
   // Explicit ids above leave the sequences behind; fast-forward them or the next
   // ordinary insert collides. Same hazard as db/sql/110_sync_sequences.sql.
-  for (const table of ["appointment_status", "category", "photo"] as const) {
+  for (const table of ["appointment_status", "category"] as const) {
     await db.execute(sql`
       SELECT setval(
         pg_get_serial_sequence(${table}, 'id'),
@@ -90,11 +69,7 @@ async function main(): Promise<void> {
   }
 
   logger.info(
-    {
-      statuses: STATUSES.length,
-      categories: CATEGORIES.length,
-      photos: PHOTOS.length,
-    },
+    { statuses: STATUSES.length, categories: CATEGORIES.length },
     "Seed complete",
   );
 }
