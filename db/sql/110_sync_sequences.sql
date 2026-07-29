@@ -25,8 +25,4 @@ SELECT 'category',
 UNION ALL
 SELECT 'customer',
        setval(pg_get_serial_sequence('customer', 'id'),
-              GREATEST((SELECT COALESCE(MAX(id), 1) FROM customer), 1))
-UNION ALL
-SELECT 'photo',
-       setval(pg_get_serial_sequence('photo', 'id'),
-              GREATEST((SELECT COALESCE(MAX(id), 1) FROM photo), 1));
+              GREATEST((SELECT COALESCE(MAX(id), 1) FROM customer), 1));

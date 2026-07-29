@@ -39,8 +39,12 @@ macOS APFS is case-insensitive, so a wrong-case reference works locally and 404s
 on the LXC's ext4. Verified: `curl /media/home/hero.jpg` returns 200 on this Mac
 even though the file is `hero.JPG`.
 
-Run `bash scripts/db/check-media.sh` before deploying — it cross-checks
-`photo.url` rows against files on disk and flags case-only mismatches.
+Before deploying, double-check `home.tsx`'s hardcoded `/media/home/...` paths
+match the real filenames' case exactly — there's no longer a DB row or script
+cross-checking this (the `photo` table that `check-media.sh` validated against
+was dropped once nothing read it; see `drizzle/0001_small_triton.sql`).
+Portfolio photos don't have this problem: their URLs come from a directory
+listing (`repositories/portfolioMedia.ts`), never hand-typed.
 
 ## Express 5 throws on `app.get("*")`
 

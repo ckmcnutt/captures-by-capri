@@ -199,11 +199,27 @@ Supabase `Photos` bucket:
 
 ```bash
 supabase storage cp -r ss:///Photos ./media --experimental
-bash scripts/db/check-media.sh     # verify every photo.url resolves to a file
 ```
 
-The bucket layout maps 1:1 onto `/media`, so `db/sql/100_rewrite_photo_urls.sql`
-is a pure prefix swap.
+The bucket layout maps 1:1 onto `/media`.
+
+**Portfolio page.** `/api/portfolio` doesn't query the database — it lists
+`MEDIA_DIR/portfolio/` directly (see `repositories/portfolioMedia.ts`). Each
+subdirectory is a category shown on the portfolio page, and every image file
+inside it is a photo in that category:
+
+```
+media/portfolio/
+├── engagement/
+│   ├── IMG_001.jpg
+│   └── IMG_002.jpg
+└── wedding-day/
+    └── IMG_003.jpg
+```
+
+Adding, renaming, or removing a category is just adding/renaming/removing a
+directory — no DB write or deploy needed. Category labels on the page are
+title-cased from the directory name (`wedding-day` -> "Wedding Day").
 
 On the LXC, bind-mount the directory from the host so it can be snapshotted:
 
@@ -245,8 +261,7 @@ pnpm db:migrate                # against the host-published :5433
 ```
 
 First-time cutover from a restored dump additionally needs
-`db/sql/100_rewrite_photo_urls.sql` and `db/sql/110_sync_sequences.sql` — see
-[`db/README.md`](db/README.md).
+`db/sql/110_sync_sequences.sql` — see [`db/README.md`](db/README.md).
 
 Caddy stays on the host (not containerized), reverse-proxying to the app
 container's published port:
@@ -297,8 +312,11 @@ rows set the id explicitly, which never advances the sequence, so
 Drizzle won't emit `OVERRIDING SYSTEM VALUE`.
 
 **Image filename case.** `media/home/` mixes `.JPG` and `.jpg`. macOS APFS is
-case-insensitive so a wrong-case reference works locally and 404s on ext4. Run
-`scripts/db/check-media.sh`.
+case-insensitive so a wrong-case reference works locally and 404s on ext4 —
+double-check `home.tsx`'s hardcoded `/media/home/...` paths match the real
+filenames exactly. Portfolio photos aren't at risk of this: their URLs are
+generated from a directory listing (`repositories/portfolioMedia.ts`), never
+hand-typed.
 
 **Express 5 throws on `app.get("*")`** (`TypeError: Missing parameter name` under
 path-to-regexp v8) — every SPA-fallback snippet online is written for Express 4.

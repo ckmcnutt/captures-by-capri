@@ -15,7 +15,7 @@ mkdir -p db/seed
 echo "==> Extracting data-only SQL to db/seed/data.sql"
 docker compose exec -T postgres pg_dump -U capri -d capri \
   --data-only --no-owner --no-privileges --schema=public \
-  -t appointment_status -t category -t customer -t appointment -t photo \
+  -t appointment_status -t category -t customer -t appointment \
   > db/seed/data.sql
 
 echo "==> Wrote $(wc -l < db/seed/data.sql) lines"

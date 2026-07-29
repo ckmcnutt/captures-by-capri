@@ -1,6 +1,5 @@
 import { sql, type SQL } from "drizzle-orm";
 import {
-  boolean,
   foreignKey,
   index,
   integer,
@@ -135,41 +134,9 @@ export const appointment = pgTable(
   ],
 );
 
-export const photo = pgTable(
-  "photo",
-  {
-    id: serial("id").primaryKey().notNull(),
-    url: text("url").notNull(),
-    title: text("title"),
-    category_id: integer("category_id").notNull(),
-    appointment_id: integer("appointment_id"),
-    featured_homepage: boolean("featured_homepage").default(false).notNull(),
-    featured_portfolio: boolean("featured_portfolio").default(false).notNull(),
-    display_order_homepage: integer("display_order_homepage"),
-    display_order_portfolio: integer("display_order_portfolio"),
-    created_at: timestamp("created_at", { withTimezone: true, mode: "date" })
-      .defaultNow()
-      .notNull(),
-  },
-  (t) => [
-    foreignKey({
-      name: "Photo_category_id_fkey",
-      columns: [t.category_id],
-      foreignColumns: [category.id],
-    }),
-    foreignKey({
-      name: "Photo_appointment_id_fkey",
-      columns: [t.appointment_id],
-      foreignColumns: [appointment.id],
-    }),
-    index("photo_featured_portfolio_idx").on(t.featured_portfolio),
-  ],
-);
-
 export type AppointmentRow = typeof appointment.$inferSelect;
 export type AppointmentInsert = typeof appointment.$inferInsert;
 export type CustomerRow = typeof customer.$inferSelect;
 export type CustomerInsert = typeof customer.$inferInsert;
 export type CategoryRow = typeof category.$inferSelect;
-export type PhotoRow = typeof photo.$inferSelect;
 export type AppointmentStatusRow = typeof appointment_status.$inferSelect;

@@ -9,7 +9,6 @@ Local Postgres 17.6 + pgAdmin run via `docker-compose.yml` at the repo root.
 |---|---|
 | `dump/` | **gitignored.** Drop the production `pg_dump` here. |
 | `seed/` | **gitignored.** `data.sql` extracted from a restored dump. Contains customer PII. |
-| `sql/100_rewrite_photo_urls.sql` | Rewrites `photo.url` from Supabase Storage URLs to `/media/` paths. |
 | `sql/110_sync_sequences.sql` | Fast-forwards id sequences past `max(id)`. Mandatory after a data-only load. |
 | `pgadmin/servers.json` | Pre-registers the local server in pgAdmin. |
 
@@ -51,8 +50,7 @@ pnpm db:reset       # migrations build the schema, then seed + rewrite + setval
 
 ```bash
 pg_restore …                   # full dump
-pnpm db:migrate                # no-op: the baseline migration is idempotent
-psql -f db/sql/100_rewrite_photo_urls.sql
+pnpm db:migrate                # baseline is idempotent; later migrations (e.g. dropping `photo`) apply for real
 psql -f db/sql/110_sync_sequences.sql
 ```
 
