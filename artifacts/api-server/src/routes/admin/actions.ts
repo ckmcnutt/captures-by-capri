@@ -1,17 +1,15 @@
 import { Router, type Response } from "express";
 import { declineCalBooking } from "../../lib/calcom";
-import {
-  createDepositPaymentLink,
-  createFinalPaymentLink,
-  stripe,
-} from "../../lib/stripe";
+import { appendClientReference } from "../../lib/stripe";
 import { isAdmin } from "../../middleware/auth";
+import { getPricingByKind, PRICING_KIND } from "../../repositories/pricing";
 import {
   getAppointment,
   updateAppointment,
   type AppointmentDetail,
 } from "../../repositories/appointments";
 import { STATUS, getStatusId } from "../../repositories/status";
+import { issueFinalInvoice } from "../../services/final-invoice";
 import { notifyClient } from "../../services/notifications";
 
 const router = Router();
@@ -69,17 +67,24 @@ router.post("/appointments/:id/confirm", isAdmin, async (req, res): Promise<void
     if (!appt) return;
     if (!appt.customer) { res.status(400).json({ error: "No customer associated" }); return; }
 
-    const { url: paymentUrl, id: paymentLinkId } = await createDepositPaymentLink(id);
+    const depositConfig = await getPricingByKind(PRICING_KIND.deposit);
+    if (!depositConfig?.stripe_payment_link_url || !depositConfig.stripe_payment_link_id) {
+      res.status(400).json({ error: "Deposit pricing is not configured yet — set it on the admin pricing page first." });
+      return;
+    }
+
+    const paymentUrl = appendClientReference(depositConfig.stripe_payment_link_url, id);
+    const depositAmount = (depositConfig.amount_cents / 100).toFixed(2);
 
     await updateAppointment(id, {
-      stripe_deposit_invoice_id: paymentLinkId,
+      stripe_deposit_invoice_id: depositConfig.stripe_payment_link_id,
       stripe_deposit_url: paymentUrl,
       status_id: await getStatusId(STATUS.depositRequested),
     });
 
     await notifyClient(
       appt.customer,
-      `Hi ${appt.customer.first_name}! Your photography session request with Captures By Capri has been reviewed. Complete your $20 deposit here: ${paymentUrl}`,
+      `Hi ${appt.customer.first_name}! Your photography session request with Captures By Capri has been reviewed. Complete your $${depositAmount} deposit here: ${paymentUrl}`,
       "Your session is confirmed — complete your deposit",
     );
 
@@ -138,50 +143,20 @@ router.post("/appointments/:id/remind-deposit", isAdmin, async (req, res): Promi
   try {
     const appt = await loadForAction(res, id, [STATUS.depositRequested]);
     if (!appt) return;
-    if (!appt.stripe_deposit_invoice_id) { res.status(400).json({ error: "No deposit payment link found" }); return; }
+    if (!appt.stripe_deposit_url) { res.status(400).json({ error: "No deposit payment link found" }); return; }
     if (!appt.customer) { res.status(400).json({ error: "No customer associated" }); return; }
-    if (!stripe) { res.status(500).json({ error: "Stripe is not configured" }); return; }
-
-    const paymentLink = await stripe.paymentLinks.retrieve(appt.stripe_deposit_invoice_id);
-
-    // Backfill for appointments created before stripe_deposit_url was stored.
-    if (!appt.stripe_deposit_url) {
-      await updateAppointment(id, { stripe_deposit_url: paymentLink.url });
-    }
 
     await notifyClient(
       appt.customer,
-      `Hi ${appt.customer.first_name}, this is a reminder to complete your $20 deposit with Captures By Capri: ${paymentLink.url}`,
+      `Hi ${appt.customer.first_name}, this is a reminder to complete your deposit with Captures By Capri: ${appt.stripe_deposit_url}`,
       "Reminder: complete your deposit — Captures By Capri",
     );
 
     req.log.info({ appointmentId: id }, "Deposit reminder sent");
-    res.json({ ok: true, paymentUrl: paymentLink.url });
+    res.json({ ok: true, paymentUrl: appt.stripe_deposit_url });
   } catch (err) {
     req.log.error({ err, appointmentId: id }, "Failed to send deposit reminder");
     res.status(500).json({ error: "Failed to send deposit reminder" });
-  }
-});
-
-// ── Set final price ───────────────────────────────────────────────────────────
-
-router.patch("/appointments/:id/set-price", isAdmin, async (req, res): Promise<void> => {
-  const id = parseId(req.params.id);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid appointment id" }); return; }
-
-  const { amount } = req.body as { amount?: number };
-  if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
-    res.status(400).json({ error: "amount must be a positive number" });
-    return;
-  }
-
-  try {
-    await updateAppointment(id, { final_invoice_amount: amount });
-    req.log.info({ appointmentId: id, amount }, "Final invoice amount set");
-    res.json({ ok: true });
-  } catch (err) {
-    req.log.error({ err, appointmentId: id }, "Failed to set price");
-    res.status(500).json({ error: "Failed to set price" });
   }
 });
 
@@ -194,28 +169,13 @@ router.post("/appointments/:id/send-final-invoice", isAdmin, async (req, res): P
   try {
     const appt = await loadForAction(res, id, [STATUS.depositPaid]);
     if (!appt) return;
-
-    // final_invoice_amount is mapped as a JS number (see db/schema.ts), so this
-    // comparison and the .toFixed() below are safe. As a NUMERIC-shaped string
-    // they would not be.
-    if (!appt.final_invoice_amount || appt.final_invoice_amount <= 0) {
-      res.status(400).json({ error: "Set a final invoice amount before sending" });
-      return;
-    }
     if (!appt.customer) { res.status(400).json({ error: "No customer associated" }); return; }
 
-    const amountCents = Math.round(appt.final_invoice_amount * 100);
-    const { url: paymentUrl, id: paymentLinkId } = await createFinalPaymentLink(id, amountCents);
-
-    await updateAppointment(id, {
-      stripe_final_invoice_id: paymentLinkId,
-      stripe_final_url: paymentUrl,
-      status_id: await getStatusId(STATUS.invoiceSent),
-    });
+    const { url: paymentUrl, amountCents } = await issueFinalInvoice(appt);
 
     await notifyClient(
       appt.customer,
-      `Hi ${appt.customer.first_name}! Your final invoice of $${appt.final_invoice_amount.toFixed(2)} for your photography session with Captures By Capri is ready: ${paymentUrl}`,
+      `Hi ${appt.customer.first_name}! Your final invoice of $${(amountCents / 100).toFixed(2)} for your photography session with Captures By Capri is ready: ${paymentUrl}`,
       "Your final invoice from Captures By Capri",
     );
 
@@ -236,24 +196,17 @@ router.post("/appointments/:id/remind-final-invoice", isAdmin, async (req, res):
   try {
     const appt = await loadForAction(res, id, [STATUS.invoiceSent]);
     if (!appt) return;
-    if (!appt.stripe_final_invoice_id) { res.status(400).json({ error: "No final invoice found" }); return; }
+    if (!appt.stripe_final_url) { res.status(400).json({ error: "No final invoice found" }); return; }
     if (!appt.customer) { res.status(400).json({ error: "No customer associated" }); return; }
-    if (!stripe) { res.status(500).json({ error: "Stripe is not configured" }); return; }
-
-    const paymentLink = await stripe.paymentLinks.retrieve(appt.stripe_final_invoice_id);
-
-    if (!appt.stripe_final_url) {
-      await updateAppointment(id, { stripe_final_url: paymentLink.url });
-    }
 
     await notifyClient(
       appt.customer,
-      `Hi ${appt.customer.first_name}, this is a reminder to complete your final payment for your Captures By Capri session: ${paymentLink.url}`,
+      `Hi ${appt.customer.first_name}, this is a reminder to complete your final payment for your Captures By Capri session: ${appt.stripe_final_url}`,
       "Reminder: final payment due — Captures By Capri",
     );
 
     req.log.info({ appointmentId: id }, "Final invoice reminder sent");
-    res.json({ ok: true, paymentUrl: paymentLink.url });
+    res.json({ ok: true, paymentUrl: appt.stripe_final_url });
   } catch (err) {
     req.log.error({ err, appointmentId: id }, "Failed to send final invoice reminder");
     res.status(500).json({ error: "Failed to send final invoice reminder" });

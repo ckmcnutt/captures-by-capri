@@ -11,7 +11,7 @@ import "../env";
 import { sql } from "drizzle-orm";
 import { closeDb, db } from "./client";
 import { logger } from "../lib/logger";
-import { appointment_status, category } from "./schema";
+import { appointment_status, category, pricing_config } from "./schema";
 import { STATUS } from "../repositories/status";
 
 /**
@@ -44,6 +44,21 @@ const CATEGORIES: Array<{ id: number; category_name: string; category_desc: stri
     { id: 5, category_name: "Event", category_desc: "Event coverage" },
   ];
 
+/**
+ * Placeholder starting amounts, not authoritative prices. `deposit` matches
+ * the value that was previously hardcoded in lib/stripe.ts; final_30/final_60
+ * have no prior authoritative figure (the marketing copy in book.tsx and
+ * terms.tsx already disagreed with each other and with the hardcoded
+ * deposit). An admin should confirm/update these on the pricing page — the
+ * Stripe fields stay null until they do, so nothing goes live from a seed
+ * alone.
+ */
+const PRICING: Array<{ kind: string; amount_cents: number }> = [
+  { kind: "deposit", amount_cents: 2000 },
+  { kind: "final_30", amount_cents: 10000 },
+  { kind: "final_60", amount_cents: 20000 },
+];
+
 async function main(): Promise<void> {
   logger.info("Seeding lookup tables");
 
@@ -68,8 +83,15 @@ async function main(): Promise<void> {
     `);
   }
 
+  // kind is a text primary key, not a serial id, so there's no sequence to
+  // fast-forward here.
+  await db
+    .insert(pricing_config)
+    .values(PRICING)
+    .onConflictDoNothing({ target: pricing_config.kind });
+
   logger.info(
-    { statuses: STATUSES.length, categories: CATEGORIES.length },
+    { statuses: STATUSES.length, categories: CATEGORIES.length, pricing: PRICING.length },
     "Seed complete",
   );
 }

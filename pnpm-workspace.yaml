@@ -73,3 +73,6 @@ overrides:
   # Floor esbuild above the CVE-affected releases. A caret rather than an exact
   # pin so drizzle-kit's vendored esbuild can co-resolve.
   esbuild: "^0.27.3"
+
+allowBuilds:
+  esbuild: true

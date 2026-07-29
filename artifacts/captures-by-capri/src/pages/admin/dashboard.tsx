@@ -182,9 +182,6 @@ function DetailPanel({
 
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [finalPrice, setFinalPrice] = useState(
-    appt.final_invoice_amount != null ? String(appt.final_invoice_amount) : ""
-  );
   const [photoUrl, setPhotoUrl] = useState(appt.photo_delivery_url ?? "");
   const [rejectReason, setRejectReason] = useState("");
   const [pendingStatus, setPendingStatus] = useState(status?.status_name ?? "");
@@ -308,36 +305,12 @@ function DetailPanel({
           {statusName === "deposit_paid" && (
             <section className="space-y-3">
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Final Invoice</h3>
-              <div className="flex gap-2 items-center">
-                <span className="text-muted-foreground text-sm">$</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={finalPrice}
-                  onChange={(e) => setFinalPrice(e.target.value)}
-                  placeholder="e.g. 350.00"
-                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-zinc-600 transition-colors"
-                />
-                <ActionButton
-                  variant="ghost"
-                  onClick={() => run("set-price", () => apiCall("PATCH", "set-price", { amount: parseFloat(finalPrice) }))}
-                  loading={loading === "set-price"}
-                  disabled={!finalPrice || isNaN(parseFloat(finalPrice))}
-                >
-                  Save
-                </ActionButton>
-              </div>
               <ActionButton
                 onClick={() => run("send-final-invoice", () => apiCall("POST", "send-final-invoice"))}
                 loading={loading === "send-final-invoice"}
-                disabled={!appt.final_invoice_amount}
               >
                 Send Final Invoice
               </ActionButton>
-              {!appt.final_invoice_amount && (
-                <p className="text-xs text-muted-foreground/70">Set and save a price first.</p>
-              )}
               {isPast && (
                 <ActionButton
                   variant="secondary"

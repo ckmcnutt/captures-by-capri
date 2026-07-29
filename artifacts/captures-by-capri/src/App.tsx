@@ -10,12 +10,16 @@ import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminPricing from "@/pages/admin/pricing";
 import { Layout } from "@/components/layout";
 
 function Router() {
   return (
     <Switch>
       <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/pricing">
+        <AdminPricing />
+      </Route>
       <Route path="/admin">
         <AdminDashboard />
       </Route>

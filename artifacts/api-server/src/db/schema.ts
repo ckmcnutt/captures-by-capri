@@ -134,6 +134,31 @@ export const appointment = pgTable(
   ],
 );
 
+/**
+ * The persistent, reusable Stripe payment links this app now sends to
+ * customers, one row per `kind`. Editing a row's `amount_cents` (via the admin
+ * pricing page) regenerates its Stripe Price + Payment Link and makes that the
+ * default for all future confirm/send-final-invoice actions — it deliberately
+ * does not touch appointments that already reference the previous link.
+ *
+ * `kind` is a plain text primary key rather than a pg enum, matching this
+ * schema's existing convention (see `status_name`, `preferred_contact_method`)
+ * of validating a fixed set of values in application code.
+ */
+export const pricing_config = pgTable("pricing_config", {
+  kind: text("kind").primaryKey().notNull(),
+  amount_cents: integer("amount_cents").notNull(),
+  stripe_price_id: text("stripe_price_id"),
+  stripe_payment_link_id: text("stripe_payment_link_id"),
+  stripe_payment_link_url: text("stripe_payment_link_url"),
+  updated_at: timestamp("updated_at", { withTimezone: true, mode: "date" })
+    .defaultNow()
+    .notNull(),
+});
+
+export type PricingConfigRow = typeof pricing_config.$inferSelect;
+export type PricingConfigInsert = typeof pricing_config.$inferInsert;
+
 export type AppointmentRow = typeof appointment.$inferSelect;
 export type AppointmentInsert = typeof appointment.$inferInsert;
 export type CustomerRow = typeof customer.$inferSelect;

@@ -1,6 +1,5 @@
 import type { Logger } from "pino";
 import { cancelCalBooking } from "../lib/calcom";
-import { createFinalPaymentLink } from "../lib/stripe";
 import { daysUntil } from "../lib/time";
 import {
   listByStatusForJobs,
@@ -8,6 +7,7 @@ import {
   type JobAppointment,
 } from "../repositories/appointments";
 import { STATUS, getStatusId } from "../repositories/status";
+import { issueFinalInvoice } from "./final-invoice";
 import { notifyAdmin, notifyClient } from "./notifications";
 
 /**
@@ -15,8 +15,9 @@ import { notifyAdmin, notifyClient } from "./notifications";
  * `scheduled-jobs`.
  *
  * Windows (each a full 24 hours wide, hence the daily-only cron):
- *   deposit_paid, T-3d, no price set  -> nag the photographer
- *   deposit_paid, T-2d, price set     -> create + send the final invoice
+ *   deposit_paid, T-2d                -> send the final invoice (price is always
+ *                                        derived from session duration now, so
+ *                                        there's no longer a "no price set" case)
  *   invoice_sent, T-1d                -> remind the client, warn the photographer
  *   invoice_sent, past start          -> cancel the appointment and the booking
  *
@@ -81,7 +82,7 @@ async function runScheduledJobsInner(
 
     for (const appt of appointments) {
       try {
-        if (await handleDepositPaid(appt, invoiceSentId, log)) processed++;
+        if (await handleDepositPaid(appt, log)) processed++;
       } catch (err) {
         const msg = `deposit_paid appt #${appt.id}: ${errorText(err)}`;
         log.error({ err, appointmentId: appt.id }, "Scheduled job step failed");
@@ -120,31 +121,13 @@ async function runScheduledJobsInner(
 /** Returns true when the appointment was acted on. */
 async function handleDepositPaid(
   appt: JobAppointment,
-  invoiceSentId: number,
   log: Logger,
 ): Promise<boolean> {
   const days = daysUntil(appt.start_time);
 
-  // T-3d with no price set: nudge the photographer.
-  if (days <= 3 && days > 2 && !appt.final_invoice_amount) {
-    await notifyAdmin(
-      `Reminder: Appointment #${appt.id} is in 3 days and has no final invoice amount set.`,
-    );
-    log.info({ appointmentId: appt.id }, "Admin nudged: no final price set");
-    return true;
-  }
-
-  // T-2d with a price set: create and send the final invoice.
-  if (days <= 2 && days > 1 && appt.final_invoice_amount) {
-    const amountCents = Math.round(appt.final_invoice_amount * 100);
-    const { url, id } = await createFinalPaymentLink(appt.id, amountCents);
-
-    await updateAppointment(appt.id, {
-      stripe_final_invoice_id: id,
-      // Written here, unlike the edge function — the dashboard renders this.
-      stripe_final_url: url,
-      status_id: invoiceSentId,
-    });
+  // T-2d: send the final invoice, price derived from the appointment's duration.
+  if (days <= 2 && days > 1) {
+    const { url, amountCents } = await issueFinalInvoice(appt);
 
     if (appt.customer) {
       await notifyClient(

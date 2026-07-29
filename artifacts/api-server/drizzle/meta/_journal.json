@@ -15,6 +15,13 @@
       "when": 1785283910286,
       "tag": "0001_small_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785361049216,
+      "tag": "0002_sloppy_solo",
+      "breakpoints": true
     }
   ]
 }
