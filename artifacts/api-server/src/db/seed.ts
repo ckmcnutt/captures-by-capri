@@ -62,15 +62,16 @@ const PRICING: Array<{ kind: string; amount_cents: number }> = [
 async function main(): Promise<void> {
   logger.info("Seeding lookup tables");
 
-  await db
-    .insert(appointment_status)
-    .values(STATUSES)
-    .onConflictDoNothing({ target: appointment_status.id });
+  // No explicit `target`: the live database carries a `status_name`/`category_name`
+  // unique constraint from the original Prisma/Supabase schema that was never
+  // captured in schema.ts or the Drizzle baseline migration. Targeting only
+  // `id` left this insert non-idempotent against a database that already has
+  // these rows (e.g. restored from the production dump) under the same names
+  // but different ids — bare ON CONFLICT DO NOTHING suppresses a conflict on
+  // any unique constraint, not just the one this file happens to know about.
+  await db.insert(appointment_status).values(STATUSES).onConflictDoNothing();
 
-  await db
-    .insert(category)
-    .values(CATEGORIES)
-    .onConflictDoNothing({ target: category.id });
+  await db.insert(category).values(CATEGORIES).onConflictDoNothing();
 
   // Explicit ids above leave the sequences behind; fast-forward them or the next
   // ordinary insert collides. Same hazard as db/sql/110_sync_sequences.sql.
