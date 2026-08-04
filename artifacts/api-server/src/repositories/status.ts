@@ -9,18 +9,17 @@ import { appointment_status } from "../db/schema";
  * failure modes (throw / null / null), and the Cal.com webhook bypassed it
  * entirely by hardcoding the magic ids 2 and 12. One implementation now, and
  * ids are always resolved by name.
+ *
+ * Deposit/invoice progress is no longer part of this lookup — it's tracked by
+ * the `deposit_requested`/`deposit_paid`/`invoice_sent`/`invoice_paid` boolean
+ * columns on `appointment` instead, so an appointment can sit in
+ * `appointment_confirmed` for its entire payment lifecycle.
  */
 export const STATUS = {
   requested: "appointment_requested",
   confirmed: "appointment_confirmed",
   canceled: "appointment_canceled",
   rejected: "appointment_rejected",
-  depositRequested: "deposit_requested",
-  depositPaid: "deposit_paid",
-  invoiceSent: "invoice_sent",
-  invoicePaid: "invoice_paid",
-  editing: "editing_photos",
-  released: "photos_released",
   complete: "appointment_complete",
 } as const;
 

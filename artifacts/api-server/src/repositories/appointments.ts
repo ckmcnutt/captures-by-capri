@@ -1,6 +1,6 @@
-import { desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { appointment, appointment_status, type AppointmentInsert } from "../db/schema";
+import { appointment, type AppointmentInsert } from "../db/schema";
 
 /**
  * The column set the admin dashboard consumes. Previously copy-pasted in three
@@ -14,12 +14,16 @@ const DETAIL_COLUMNS = {
   customer_notes: true,
   internal_notes: true,
   cal_booking_uid: true,
+  deposit_requested: true,
+  deposit_paid: true,
+  invoice_sent: true,
+  invoice_paid: true,
   stripe_deposit_invoice_id: true,
   stripe_deposit_url: true,
+  deposit_amount: true,
   stripe_final_invoice_id: true,
   stripe_final_url: true,
   final_invoice_amount: true,
-  photo_delivery_url: true,
   created_at: true,
 } as const;
 
@@ -146,37 +150,6 @@ export async function findByPaymentLinkId(
 }
 
 /**
- * Current status name for one appointment, or null if it doesn't exist.
- *
- * Lets a caller check a precondition before acting — the Stripe webhook uses
- * this to make handleDepositPaid/handleFinalPaid no-ops on a duplicate or
- * retried delivery, instead of re-applying a transition (and re-confirming
- * with Cal.com) that already happened on an earlier delivery of the same
- * event.
- */
-export async function getStatusName(id: number): Promise<string | null> {
-  const [row] = await db
-    .select({ status_name: appointment_status.status_name })
-    .from(appointment)
-    .innerJoin(
-      appointment_status,
-      eq(appointment.status_id, appointment_status.id),
-    )
-    .where(eq(appointment.id, id))
-    .limit(1);
-  return row?.status_name ?? null;
-}
-
-export async function getCalBookingUid(id: number): Promise<string | null> {
-  const [row] = await db
-    .select({ cal_booking_uid: appointment.cal_booking_uid })
-    .from(appointment)
-    .where(eq(appointment.id, id))
-    .limit(1);
-  return row?.cal_booking_uid ?? null;
-}
-
-/**
  * Insert an appointment, optionally with an explicit id.
  *
  * The Cal.com webhook passes the Cal bookingId as the primary key, which means
@@ -234,14 +207,45 @@ const JOB_WITH = {
 } as const;
 
 export type JobAppointment = Awaited<
-  ReturnType<typeof listByStatusForJobs>
+  ReturnType<typeof listAwaitingFinalInvoice>
 >[number];
 
-export async function listByStatusForJobs(statusId: number) {
+/**
+ * Confirmed appointments whose deposit is paid but no final invoice has gone
+ * out yet — the T-2d "send the final invoice" job's candidate set.
+ *
+ * Filtered to `confirmedStatusId` (not just the booleans) so an appointment
+ * that was later canceled or completed can never be re-picked-up here: status
+ * moves off `appointment_confirmed` at that point, but the booleans it
+ * accumulated along the way don't reset.
+ */
+export async function listAwaitingFinalInvoice(confirmedStatusId: number) {
   return db.query.appointment.findMany({
     columns: JOB_COLUMNS,
     with: JOB_WITH,
-    where: eq(appointment.status_id, statusId),
+    where: and(
+      eq(appointment.status_id, confirmedStatusId),
+      eq(appointment.deposit_paid, true),
+      eq(appointment.invoice_sent, false),
+    ),
+    orderBy: [appointment.start_time],
+  });
+}
+
+/**
+ * Confirmed appointments with a final invoice out but not yet paid — the T-1d
+ * reminder / past-start-time auto-cancel job's candidate set. Same
+ * status-filter reasoning as `listAwaitingFinalInvoice`.
+ */
+export async function listAwaitingFinalPayment(confirmedStatusId: number) {
+  return db.query.appointment.findMany({
+    columns: JOB_COLUMNS,
+    with: JOB_WITH,
+    where: and(
+      eq(appointment.status_id, confirmedStatusId),
+      eq(appointment.invoice_sent, true),
+      eq(appointment.invoice_paid, false),
+    ),
     orderBy: [appointment.start_time],
   });
 }

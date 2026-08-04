@@ -30,12 +30,6 @@ export function AdminLayout({ children, onLogout, commit }: AdminLayoutProps) {
               Appointments
             </Link>
             <Link
-              href="/admin/pricing"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase"
-            >
-              Pricing
-            </Link>
-            <Link
               href="/admin/settings"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase"
             >

@@ -6,9 +6,7 @@ import { stripe } from "../../lib/stripe";
 import {
   findByPaymentLinkId,
   getAppointment,
-  getCalBookingUid,
-  getStatusName,
-  setStatus,
+  updateAppointment,
 } from "../../repositories/appointments";
 import { STATUS, getStatusId } from "../../repositories/status";
 import { notifyAdmin } from "../../services/notifications";
@@ -16,76 +14,71 @@ import { notifyAdmin } from "../../services/notifications";
 const router = Router();
 
 /**
- * Both handlers below check the appointment's current status before doing
- * anything, and no-op if it doesn't match the expected precondition.
+ * Both handlers below check the appointment's current payment flags before
+ * doing anything, and no-op if the precondition isn't met.
  *
  * Stripe retries webhook deliveries that don't return 2xx, and a single
  * successful payment can emit more than one event type (checkout.session and
  * payment_intent). Without this guard, a duplicate delivery would re-run
  * confirmCalBooking against an already-confirmed Cal.com booking — which, if
  * Cal.com rejects the redundant confirm with a non-2xx, throws, 500s this
- * handler, and gets Stripe retrying indefinitely. Checking status first turns
- * a duplicate delivery into a safe no-op instead.
+ * handler, and gets Stripe retrying indefinitely. Checking the flags first
+ * turns a duplicate delivery into a safe no-op instead.
  *
  * This doesn't close every race (two deliveries landing at truly the same
- * instant could both read the pre-transition status before either writes),
- * but that's a far smaller window than the retry-driven duplicates this is
+ * instant could both read the pre-transition flags before either writes), but
+ * that's a far smaller window than the retry-driven duplicates this is
  * actually guarding against.
  */
 
 async function handleDepositPaid(appointmentId: number): Promise<void> {
-  const currentStatus = await getStatusName(appointmentId);
-  if (currentStatus !== STATUS.depositRequested) {
+  const appt = await getAppointment(appointmentId);
+  if (!appt || !appt.deposit_requested || appt.deposit_paid) {
     logger.info(
-      { appointmentId, currentStatus },
+      { appointmentId, found: !!appt, depositRequested: appt?.deposit_requested, depositPaid: appt?.deposit_paid },
       "Deposit-paid webhook ignored — appointment isn't awaiting a deposit (already processed, or a duplicate delivery)",
     );
     return;
   }
 
-  const calBookingUid = await getCalBookingUid(appointmentId);
-
-  if (calBookingUid) {
-    await confirmCalBooking(calBookingUid);
+  if (appt.cal_booking_uid) {
+    await confirmCalBooking(appt.cal_booking_uid);
   }
 
-  // Two sequential transitions, preserved from the original: the appointment is
-  // marked confirmed and then deposit_paid, so both states are represented in any
-  // downstream audit of status changes.
-  await setStatus(appointmentId, await getStatusId(STATUS.confirmed));
-  await setStatus(appointmentId, await getStatusId(STATUS.depositPaid));
+  await updateAppointment(appointmentId, {
+    deposit_paid: true,
+    status_id: await getStatusId(STATUS.confirmed),
+  });
 
   logger.info(
     { appointmentId },
-    "Deposit paid — appointment_confirmed then deposit_paid, Cal.com booking confirmed",
+    "Deposit paid — appointment confirmed, Cal.com booking confirmed",
   );
 
-  const appt = await getAppointment(appointmentId);
-  const clientName = appt?.customer
+  const clientName = appt.customer
     ? `${appt.customer.first_name} ${appt.customer.last_name}`
     : `#${appointmentId}`;
   await notifyAdmin(`Deposit paid! Client: ${clientName}. Appointment confirmed.`);
 }
 
 async function handleFinalPaid(appointmentId: number): Promise<void> {
-  const currentStatus = await getStatusName(appointmentId);
-  if (currentStatus !== STATUS.invoiceSent) {
+  const appt = await getAppointment(appointmentId);
+  if (!appt || !appt.invoice_sent || appt.invoice_paid) {
     logger.info(
-      { appointmentId, currentStatus },
+      { appointmentId, found: !!appt, invoiceSent: appt?.invoice_sent, invoicePaid: appt?.invoice_paid },
       "Final-invoice-paid webhook ignored — appointment isn't awaiting final payment (already processed, or a duplicate delivery)",
     );
     return;
   }
 
-  await setStatus(appointmentId, await getStatusId(STATUS.invoicePaid));
-  logger.info({ appointmentId }, "Final invoice paid — status set to invoice_paid");
+  await updateAppointment(appointmentId, { invoice_paid: true });
+  logger.info({ appointmentId }, "Final invoice paid");
 
-  const appt = await getAppointment(appointmentId);
-  const clientName = appt?.customer
+  const clientName = appt.customer
     ? `${appt.customer.first_name} ${appt.customer.last_name}`
     : `#${appointmentId}`;
   const amountStr =
-    typeof appt?.final_invoice_amount === "number"
+    typeof appt.final_invoice_amount === "number"
       ? ` ($${appt.final_invoice_amount.toFixed(2)})`
       : "";
   await notifyAdmin(`Final invoice paid! Client: ${clientName}.${amountStr}`);
@@ -125,20 +118,17 @@ interface ResolvableCheckoutSession {
 /**
  * Resolve which appointment a completed checkout belongs to.
  *
- * Payment links are now persistent and shared across many appointments (see
- * lib/stripe.ts), so their `metadata` can no longer identify a specific
- * appointment. Instead, every link handed to a customer has
- * `?client_reference_id=<appointmentId>` appended (see
- * lib/stripe.ts#appendClientReference), which Stripe threads onto the
- * resulting Checkout Session — `session.client_reference_id` here. The kind
- * of link (`deposit` | `final_30` | `final_60`), needed to know which
- * transition to run, comes from the static `metadata.kind` set on the
- * Payment Link itself, which does propagate to `session.metadata`.
+ * Every Checkout Session is created directly by this app, one per appointment
+ * (see lib/stripe.ts#createCheckoutSession), with `client_reference_id` set to
+ * the appointment id and `metadata.kind` set to which invoice it is
+ * (`deposit` | `final_30` | `final_60`) — both are read straight off the
+ * session here.
  *
- * A session with no `client_reference_id` predates this migration (a legacy
- * one-off per-appointment link still in flight) — those fall back to the
- * original 1:1 `findByPaymentLinkId`/metadata lookup, which is still correct
- * for them since they were never shared.
+ * A session with neither of those predates the move to per-appointment
+ * Checkout Sessions (a still-outstanding persistent Payment Link, or an even
+ * older one-off link) — those fall back to the original 1:1
+ * `findByPaymentLinkId`/metadata lookup, kept around for exactly that
+ * transition window.
  */
 async function resolveCheckoutSession(
   session: ResolvableCheckoutSession,

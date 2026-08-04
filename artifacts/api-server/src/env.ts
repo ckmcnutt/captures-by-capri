@@ -83,6 +83,13 @@ const schema = z.object({
   // NODE_ENV=production.
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Public base URL of the deployed site, no trailing slash (e.g.
+  // https://capturesbycapri.com, or http://localhost:5173 locally). Stripe
+  // Checkout Sessions require absolute success/cancel redirect URLs — see
+  // lib/stripe.ts#createCheckoutSession. Required whenever STRIPE_SECRET_KEY
+  // is set in production (enforced below); createCheckoutSession also throws
+  // if it's missing at call time, same as an unconfigured Stripe key.
+  SITE_URL: z.string().url().optional(),
   CALCOM_API_KEY: z.string().optional(),
   CAL_WEBHOOK_SECRET: z.string().optional(),
   // Carrier lookup for texting clients via a carrier's SMS-to-email gateway
@@ -119,6 +126,16 @@ const schema = z.object({
         "CALCOM_API_KEY is required when NODE_ENV=production. Confirming, " +
         "declining, and canceling Cal.com bookings all call it with no " +
         "fallback — get a key from Cal.com Settings -> Developer -> API keys.",
+    });
+  }
+  if (data.NODE_ENV === "production" && data.STRIPE_SECRET_KEY && !data.SITE_URL) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["SITE_URL"],
+      message:
+        "SITE_URL is required when STRIPE_SECRET_KEY is set in production — " +
+        "every deposit/final-invoice Checkout Session needs it to build a " +
+        "success/cancel redirect URL.",
     });
   }
 });

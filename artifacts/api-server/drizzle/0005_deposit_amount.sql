@@ -1,0 +1,1 @@
+ALTER TABLE "appointment" ADD COLUMN "deposit_amount" numeric(10, 2);
