@@ -156,6 +156,25 @@ export const pricing_config = pgTable("pricing_config", {
     .notNull(),
 });
 
+/**
+ * Singleton row (always `id = 1`) holding the photographer's own phone number
+ * and carrier, used by `notifyAdmin` (services/notifications.ts) to text
+ * booking/payment alerts via that carrier's SMS-to-email gateway. Unlike
+ * client numbers, the carrier isn't looked up via AbstractAPI on every send —
+ * it's the admin's own phone, so it's picked once from the fixed carrier list
+ * in lib/carrier-lookup.ts and stored here as that carrier's `id`.
+ */
+export const admin_settings = pgTable("admin_settings", {
+  id: integer("id").primaryKey().notNull(),
+  admin_phone_number: text("admin_phone_number"),
+  admin_phone_carrier: text("admin_phone_carrier"),
+  updated_at: timestamp("updated_at", { withTimezone: true, mode: "date" })
+    .defaultNow()
+    .notNull(),
+});
+
+export type AdminSettingsRow = typeof admin_settings.$inferSelect;
+
 export type PricingConfigRow = typeof pricing_config.$inferSelect;
 export type PricingConfigInsert = typeof pricing_config.$inferInsert;
 

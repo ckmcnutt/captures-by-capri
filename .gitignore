@@ -53,3 +53,5 @@ Thumbs.db
 /db/dump/
 /db/seed/
 *.dump
+/db/postgres
+/db/pgadmin

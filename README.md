@@ -253,7 +253,10 @@ Fill in `.env`: `ADMIN_PASSWORD`, `SESSION_SECRET`, `POSTGRES_*`,
 it survives `docker compose down`), and `HOST_MEDIA_DIR` pointing at the
 Proxmox mp0 mount — see [Media files](#media-files). Also set
 `NODE_ENV=production`, `ENABLE_SCHEDULER=true`, `CAL_WEBHOOK_SECRET`, and the
-Stripe/Cal/SMTP credentials, plus `ABSTRACT_API_KEY` for carrier lookup.
+Stripe/Cal/SMTP credentials, plus `ABSTRACT_API_KEY` for client carrier lookup.
+The admin's own phone number and carrier aren't in `.env` — set them from
+`/admin/settings` after first login; that's what booking-request, deposit-paid,
+and final-invoice-paid alerts go to.
 
 ```bash
 GIT_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build

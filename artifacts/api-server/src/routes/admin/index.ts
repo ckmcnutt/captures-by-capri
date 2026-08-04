@@ -6,6 +6,7 @@ import { isAdmin } from "../../middleware/auth";
 import actionsRouter from "./actions";
 import appointmentsRouter from "./appointments";
 import pricingRouter from "./pricing";
+import settingsRouter from "./settings";
 
 const router = Router();
 
@@ -44,5 +45,6 @@ router.get("/me", isAdmin, (_req, res): void => {
 router.use(appointmentsRouter);
 router.use(actionsRouter);
 router.use(pricingRouter);
+router.use(settingsRouter);
 
 export default router;

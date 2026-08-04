@@ -35,6 +35,12 @@ export function AdminLayout({ children, onLogout, commit }: AdminLayoutProps) {
             >
               Pricing
             </Link>
+            <Link
+              href="/admin/settings"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase"
+            >
+              Settings
+            </Link>
             {onLogout && (
               <button
                 onClick={onLogout}

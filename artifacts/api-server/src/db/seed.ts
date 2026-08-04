@@ -11,7 +11,7 @@ import "../env";
 import { sql } from "drizzle-orm";
 import { closeDb, db } from "./client";
 import { logger } from "../lib/logger";
-import { appointment_status, category, pricing_config } from "./schema";
+import { admin_settings, appointment_status, category, pricing_config } from "./schema";
 import { STATUS } from "../repositories/status";
 
 /**
@@ -90,6 +90,13 @@ async function main(): Promise<void> {
     .insert(pricing_config)
     .values(PRICING)
     .onConflictDoNothing({ target: pricing_config.kind });
+
+  // Singleton row, left blank — the admin fills in their phone number and
+  // carrier from the settings page. notifyAdmin() warns and skips until they do.
+  await db
+    .insert(admin_settings)
+    .values({ id: 1 })
+    .onConflictDoNothing({ target: admin_settings.id });
 
   logger.info(
     { statuses: STATUSES.length, categories: CATEGORIES.length, pricing: PRICING.length },

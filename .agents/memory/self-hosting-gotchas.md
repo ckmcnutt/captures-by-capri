@@ -21,13 +21,25 @@ warn-and-skip.
 
 There's no Twilio (or any SMS API) in this stack anymore. `notifyClient` and
 `notifyAdmin` in `services/notifications.ts` both "text" a phone number by
-looking up its carrier (`lib/carrier-lookup.ts`, via AbstractAPI's free tier)
-and emailing `<10-digit-number>@<carrier's SMS gateway domain>` (e.g.
+emailing `<10-digit-number>@<carrier's SMS gateway domain>` (e.g.
 `5555550100@vtext.com`) over the existing SMTP transport. No per-message cost,
-but it silently degrades to a no-op if `ABSTRACT_API_KEY` is unset, the number
-isn't a plain 10-digit US number, or the carrier isn't in the gateway table in
-`lib/carrier-lookup.ts` — there's no error surfaced to the caller in any of
-those cases, by design (matches how every other transport here degrades).
+but both silently degrade to a no-op rather than surfacing an error to the
+caller, by design (matches how every other transport here degrades) — the
+number must resolve to a plain 10-digit US number, and the carrier must be
+one of the domains in `lib/carrier-lookup.ts`.
+
+The two differ in how they get the carrier, though:
+
+- `notifyClient` looks it up on every send via AbstractAPI (`lookupCarrier`,
+  free tier), since a client's carrier isn't known ahead of time and numbers
+  get ported between carriers. Degrades to a no-op if `ABSTRACT_API_KEY` is
+  unset or the lookup fails.
+- `notifyAdmin` texts a single fixed number — the photographer's own — so
+  there's no API lookup involved. Phone number and carrier are set once on
+  the admin settings page (`/admin/settings`) and persisted in the
+  `admin_settings` table (`repositories/admin-settings.ts`), not an env var.
+  Degrades to a no-op if that row is empty or missing (`db/seed.ts` seeds a
+  blank singleton row so it's never missing after a normal setup).
 
 ## `appointment.id` is both a serial PK and a Cal.com bookingId sink
 
