@@ -8,14 +8,38 @@ Replit + Supabase. Each of these is silent — nothing fails loudly.
 The reminder windows in `services/scheduled-jobs.ts` (`d <= 3 && d > 2`,
 `d <= 2 && d > 1`, `d <= 1 && d > 0`) are each a full 24-hour band, and no column
 records that a reminder was already sent. An hourly schedule sends every reminder
-up to 24 times — real Twilio spend, real annoyance for clients.
+up to 24 times — real annoyance for clients getting the same reminder repeatedly.
 
 Finer resolution needs a schema change (a `last_reminder_sent_at` column), not a
 config change.
 
 `POST /api/jobs/run` is likewise not idempotent. When testing, leave
-`TWILIO_*` and `SMTP_HOST` unset: both transports degrade to a
+`ABSTRACT_API_KEY` and `SMTP_HOST` unset: both transports degrade to a
 warn-and-skip.
+
+## Texting has no SMS API — it emails carrier gateways instead
+
+There's no Twilio (or any SMS API) in this stack anymore. `notifyClient` and
+`notifyAdmin` in `services/notifications.ts` both "text" a phone number by
+emailing `<10-digit-number>@<carrier's SMS gateway domain>` (e.g.
+`5555550100@vtext.com`) over the existing SMTP transport. No per-message cost,
+but both silently degrade to a no-op rather than surfacing an error to the
+caller, by design (matches how every other transport here degrades) — the
+number must resolve to a plain 10-digit US number, and the carrier must be
+one of the domains in `lib/carrier-lookup.ts`.
+
+The two differ in how they get the carrier, though:
+
+- `notifyClient` looks it up on every send via AbstractAPI (`lookupCarrier`,
+  free tier), since a client's carrier isn't known ahead of time and numbers
+  get ported between carriers. Degrades to a no-op if `ABSTRACT_API_KEY` is
+  unset or the lookup fails.
+- `notifyAdmin` texts a single fixed number — the photographer's own — so
+  there's no API lookup involved. Phone number and carrier are set once on
+  the admin settings page (`/admin/settings`) and persisted in the
+  `admin_settings` table (`repositories/admin-settings.ts`), not an env var.
+  Degrades to a no-op if that row is empty or missing (`db/seed.ts` seeds a
+  blank singleton row so it's never missing after a normal setup).
 
 ## `appointment.id` is both a serial PK and a Cal.com bookingId sink
 

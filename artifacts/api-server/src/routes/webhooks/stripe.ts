@@ -5,11 +5,13 @@ import { logger } from "../../lib/logger";
 import { stripe } from "../../lib/stripe";
 import {
   findByPaymentLinkId,
+  getAppointment,
   getCalBookingUid,
   getStatusName,
   setStatus,
 } from "../../repositories/appointments";
 import { STATUS, getStatusId } from "../../repositories/status";
+import { notifyAdmin } from "../../services/notifications";
 
 const router = Router();
 
@@ -57,6 +59,12 @@ async function handleDepositPaid(appointmentId: number): Promise<void> {
     { appointmentId },
     "Deposit paid — appointment_confirmed then deposit_paid, Cal.com booking confirmed",
   );
+
+  const appt = await getAppointment(appointmentId);
+  const clientName = appt?.customer
+    ? `${appt.customer.first_name} ${appt.customer.last_name}`
+    : `#${appointmentId}`;
+  await notifyAdmin(`Deposit paid! Client: ${clientName}. Appointment confirmed.`);
 }
 
 async function handleFinalPaid(appointmentId: number): Promise<void> {
@@ -71,6 +79,16 @@ async function handleFinalPaid(appointmentId: number): Promise<void> {
 
   await setStatus(appointmentId, await getStatusId(STATUS.invoicePaid));
   logger.info({ appointmentId }, "Final invoice paid — status set to invoice_paid");
+
+  const appt = await getAppointment(appointmentId);
+  const clientName = appt?.customer
+    ? `${appt.customer.first_name} ${appt.customer.last_name}`
+    : `#${appointmentId}`;
+  const amountStr =
+    typeof appt?.final_invoice_amount === "number"
+      ? ` ($${appt.final_invoice_amount.toFixed(2)})`
+      : "";
+  await notifyAdmin(`Final invoice paid! Client: ${clientName}.${amountStr}`);
 }
 
 function extractMetadata(

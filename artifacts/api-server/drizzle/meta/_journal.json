@@ -22,6 +22,13 @@
       "when": 1785361049216,
       "tag": "0002_sloppy_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785808621439,
+      "tag": "0003_aromatic_callisto",
+      "breakpoints": true
     }
   ]
 }

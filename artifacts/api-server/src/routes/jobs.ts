@@ -11,8 +11,8 @@ const router = Router();
  * cron tick (or another manual call) into double-sending.
  *
  * Still not idempotent across separate (non-overlapping) runs — it sends real
- * SMS and email. When testing, leave the Twilio credentials and SMTP_HOST
- * unset: both transports degrade to a warn-and-skip.
+ * SMS and email. When testing, leave ABSTRACT_API_KEY and SMTP_HOST unset:
+ * both transports degrade to a warn-and-skip.
  */
 router.post("/run", isAdmin, async (req, res): Promise<void> => {
   try {

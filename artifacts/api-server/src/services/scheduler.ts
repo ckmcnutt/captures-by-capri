@@ -12,8 +12,8 @@ import { runScheduledJobs } from "./scheduled-jobs";
  * The reminder windows in scheduled-jobs.ts (`d <= 3 && d > 2`, `d <= 2 && d > 1`,
  * `d <= 1 && d > 0`) are each a full 24-hour band, and nothing in the schema
  * records that a reminder was already sent. An hourly schedule would therefore
- * send every reminder up to 24 times — real Twilio spend and real annoyance for
- * clients. Getting finer resolution requires a schema change (a
+ * send every reminder up to 24 times — real annoyance for clients getting the
+ * same reminder repeatedly. Getting finer resolution requires a schema change (a
  * last_reminder_sent_at column), not a config change.
  *
  * Overlap protection (a run must not overlap itself, or a previous tick, or a
