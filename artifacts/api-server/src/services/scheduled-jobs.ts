@@ -2,7 +2,8 @@ import type { Logger } from "pino";
 import { cancelCalBooking } from "../lib/calcom";
 import { daysUntil } from "../lib/time";
 import {
-  listByStatusForJobs,
+  listAwaitingFinalInvoice,
+  listAwaitingFinalPayment,
   updateAppointment,
   type JobAppointment,
 } from "../repositories/appointments";
@@ -69,15 +70,14 @@ async function runScheduledJobsInner(
   const errors: string[] = [];
   let processed = 0;
 
-  const [depositPaidId, invoiceSentId, canceledId] = await Promise.all([
-    getStatusId(STATUS.depositPaid),
-    getStatusId(STATUS.invoiceSent),
+  const [confirmedId, canceledId] = await Promise.all([
+    getStatusId(STATUS.confirmed),
     getStatusId(STATUS.canceled),
   ]);
 
-  // ── deposit_paid ──────────────────────────────────────────────────────────
+  // ── deposit paid, awaiting final invoice ─────────────────────────────────
   try {
-    const appointments = await listByStatusForJobs(depositPaidId);
+    const appointments = await listAwaitingFinalInvoice(confirmedId);
     log.info({ count: appointments.length }, "Processing deposit_paid appointments");
 
     for (const appt of appointments) {
@@ -95,9 +95,9 @@ async function runScheduledJobsInner(
     errors.push(msg);
   }
 
-  // ── invoice_sent ──────────────────────────────────────────────────────────
+  // ── final invoice sent, awaiting payment ─────────────────────────────────
   try {
-    const appointments = await listByStatusForJobs(invoiceSentId);
+    const appointments = await listAwaitingFinalPayment(confirmedId);
     log.info({ count: appointments.length }, "Processing invoice_sent appointments");
 
     for (const appt of appointments) {

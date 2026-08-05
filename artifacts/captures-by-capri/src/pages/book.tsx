@@ -1,4 +1,14 @@
 import { motion } from "framer-motion";
+import Cal from "@calcom/embed-react";
+
+// __CAL_URL__ defaults to the public cal.com SaaS but can be overridden (see
+// vite.config.ts) to point at a self-hosted instance, so calOrigin/embedJsUrl
+// are derived from it rather than hardcoded.
+const calUrl = new URL(__CAL_URL__);
+const CAL_LINK = calUrl.pathname.replace(/^\//, "");
+const CAL_ORIGIN = calUrl.origin;
+const CAL_EMBED_JS_URL =
+  CAL_ORIGIN === "https://cal.com" ? undefined : `${CAL_ORIGIN}/embed/embed.js`;
 
 export default function Book() {
   return (
@@ -75,14 +85,16 @@ export default function Book() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <div className="border border-border overflow-hidden bg-card" data-testid="calcom-embed">
-              <iframe
-                src={__CAL_URL__}
-                width="100%"
-                height="700px"
-                frameBorder="0"
-                title="Book a session with Capri"
-                className="w-full"
+            <div
+              className="border border-border overflow-hidden bg-card"
+              data-testid="calcom-embed"
+              aria-label="Book a session with Capri"
+            >
+              <Cal
+                calLink={CAL_LINK}
+                calOrigin={CAL_ORIGIN}
+                embedJsUrl={CAL_EMBED_JS_URL}
+                style={{ width: "100%", minHeight: "700px" }}
               />
             </div>
 

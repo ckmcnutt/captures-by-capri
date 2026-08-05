@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { isAdmin } from "../../middleware/auth";
-import { getAllPricing, isPricingKind } from "../../repositories/pricing";
-import { regeneratePricing } from "../../services/pricing-admin";
+import {
+  getAllPricing,
+  getPricingByKind,
+  isPricingKind,
+  updatePricingByKind,
+} from "../../repositories/pricing";
 
 const router = Router();
 
@@ -29,14 +33,13 @@ router.put("/pricing/:kind", isAdmin, async (req, res): Promise<void> => {
   }
 
   try {
-    const config = await regeneratePricing(kind, Math.round(amount * 100));
-    req.log.info({ kind, amount }, "Pricing regenerated");
+    await updatePricingByKind(kind, Math.round(amount * 100));
+    const config = await getPricingByKind(kind);
+    req.log.info({ kind, amount }, "Default pricing updated");
     res.json({ ok: true, config });
   } catch (err) {
-    req.log.error({ err, kind }, "Failed to regenerate pricing");
-    res.status(500).json({
-      error: err instanceof Error ? err.message : "Failed to regenerate pricing",
-    });
+    req.log.error({ err, kind }, "Failed to update pricing");
+    res.status(500).json({ error: "Failed to update pricing" });
   }
 });
 

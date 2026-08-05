@@ -36,15 +36,10 @@ export async function getPricingByKind(
 
 export async function updatePricingByKind(
   kind: PricingKind,
-  values: {
-    amount_cents: number;
-    stripe_price_id: string;
-    stripe_payment_link_id: string;
-    stripe_payment_link_url: string;
-  },
+  amountCents: number,
 ): Promise<void> {
   await db
     .update(pricing_config)
-    .set({ ...values, updated_at: new Date() })
+    .set({ amount_cents: amountCents, updated_at: new Date() })
     .where(eq(pricing_config.kind, kind));
 }

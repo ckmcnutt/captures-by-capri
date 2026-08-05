@@ -19,18 +19,17 @@ import { STATUS } from "../repositories/status";
  * old Supabase edge function hardcoded 2 = canceled and 12 = rejected. Keeping
  * the numbering identical means a dev database behaves like production even for
  * code paths that predate the name-based lookup.
+ *
+ * ids 4-9 (the old deposit/invoice/editing/release statuses) are deliberately
+ * not reused here — migration 0004 retired them in favor of the boolean columns
+ * on `appointment`, and reissuing those ids for a new status would collide with
+ * that migration's expectations for any database it has already run against.
  */
 const STATUSES: Array<{ id: number; status_name: string; status_desc: string }> =
   [
     { id: 1, status_name: STATUS.requested, status_desc: "Booking submitted via Cal.com, awaiting review" },
     { id: 2, status_name: STATUS.canceled, status_desc: "Canceled by the client or automatically" },
     { id: 3, status_name: STATUS.confirmed, status_desc: "Confirmed after deposit payment" },
-    { id: 4, status_name: STATUS.depositRequested, status_desc: "Deposit payment link sent" },
-    { id: 5, status_name: STATUS.depositPaid, status_desc: "Deposit received" },
-    { id: 6, status_name: STATUS.invoiceSent, status_desc: "Final invoice sent" },
-    { id: 7, status_name: STATUS.invoicePaid, status_desc: "Final invoice paid" },
-    { id: 8, status_name: STATUS.editing, status_desc: "Session shot, photos being edited" },
-    { id: 9, status_name: STATUS.released, status_desc: "Gallery link delivered to the client" },
     { id: 10, status_name: STATUS.complete, status_desc: "Fully complete" },
     { id: 12, status_name: STATUS.rejected, status_desc: "Request declined by the photographer" },
   ];

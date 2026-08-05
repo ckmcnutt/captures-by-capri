@@ -29,6 +29,34 @@
       "when": 1785808621439,
       "tag": "0003_aromatic_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785821178630,
+      "tag": "0004_deposit_invoice_booleans",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785822127415,
+      "tag": "0005_deposit_amount",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785822137384,
+      "tag": "0006_drop_photo_delivery_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785823169004,
+      "tag": "0007_drop_pricing_stripe_columns",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { sql, type SQL } from "drizzle-orm";
 import {
+  boolean,
   foreignKey,
   index,
   integer,
@@ -94,8 +95,17 @@ export const appointment = pgTable(
     }).notNull(),
     customer_notes: text("customer_notes"),
     internal_notes: text("internal_notes"),
+    deposit_requested: boolean("deposit_requested").default(false).notNull(),
+    deposit_paid: boolean("deposit_paid").default(false).notNull(),
+    invoice_sent: boolean("invoice_sent").default(false).notNull(),
+    invoice_paid: boolean("invoice_paid").default(false).notNull(),
     stripe_deposit_invoice_id: text("stripe_deposit_invoice_id"),
     stripe_deposit_url: text("stripe_deposit_url"),
+    deposit_amount: numeric("deposit_amount", {
+      precision: 10,
+      scale: 2,
+      mode: "number",
+    }),
     stripe_final_invoice_id: text("stripe_final_invoice_id"),
     stripe_final_url: text("stripe_final_url"),
     final_invoice_amount: numeric("final_invoice_amount", {
@@ -103,7 +113,6 @@ export const appointment = pgTable(
       scale: 2,
       mode: "number",
     }),
-    photo_delivery_url: text("photo_delivery_url"),
     created_at: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -124,7 +133,7 @@ export const appointment = pgTable(
       columns: [t.status_id],
       foreignColumns: [appointment_status.id],
     }),
-    // Supports the Stripe webhook's OR lookup across both payment-link columns.
+    // Supports the Stripe webhook's OR lookup across both Checkout Session id columns.
     index("appointment_stripe_deposit_invoice_idx").on(
       t.stripe_deposit_invoice_id,
     ),
@@ -135,11 +144,13 @@ export const appointment = pgTable(
 );
 
 /**
- * The persistent, reusable Stripe payment links this app now sends to
- * customers, one row per `kind`. Editing a row's `amount_cents` (via the admin
- * pricing page) regenerates its Stripe Price + Payment Link and makes that the
- * default for all future confirm/send-final-invoice actions — it deliberately
- * does not touch appointments that already reference the previous link.
+ * Default deposit/final-invoice amounts, one row per `kind`, edited on the
+ * admin settings page. These are only ever a starting point: `confirm`
+ * creates a one-time Stripe Checkout Session at whatever amount the admin
+ * enters in the deposit popup, and a final invoice uses the appointment's own
+ * `final_invoice_amount` if one was already set, falling back to this row's
+ * `amount_cents` for the matching duration tier otherwise. Editing a row here
+ * never touches an appointment that already has its amount set.
  *
  * `kind` is a plain text primary key rather than a pg enum, matching this
  * schema's existing convention (see `status_name`, `preferred_contact_method`)
@@ -148,9 +159,6 @@ export const appointment = pgTable(
 export const pricing_config = pgTable("pricing_config", {
   kind: text("kind").primaryKey().notNull(),
   amount_cents: integer("amount_cents").notNull(),
-  stripe_price_id: text("stripe_price_id"),
-  stripe_payment_link_id: text("stripe_payment_link_id"),
-  stripe_payment_link_url: text("stripe_payment_link_url"),
   updated_at: timestamp("updated_at", { withTimezone: true, mode: "date" })
     .defaultNow()
     .notNull(),

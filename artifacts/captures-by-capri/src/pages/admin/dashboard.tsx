@@ -34,12 +34,16 @@ interface Appointment {
   customer_notes: string | null;
   internal_notes: string | null;
   cal_booking_uid: string | null;
+  deposit_requested: boolean;
+  deposit_paid: boolean;
+  invoice_sent: boolean;
+  invoice_paid: boolean;
   stripe_deposit_invoice_id: string | null;
   stripe_deposit_url: string | null;
+  deposit_amount: number | null;
   stripe_final_invoice_id: string | null;
   stripe_final_url: string | null;
   final_invoice_amount: number | null;
-  photo_delivery_url: string | null;
   created_at: string;
   customer: Customer | null;
   category: Category | null;
@@ -51,25 +55,34 @@ const STATUS_COLORS: Record<string, string> = {
   appointment_confirmed: "bg-green-500/20 text-green-300 border-green-500/30",
   appointment_canceled: "bg-red-500/20 text-red-400 border-red-500/30",
   appointment_rejected: "bg-red-500/20 text-red-400 border-red-500/30",
-  deposit_requested: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  deposit_paid: "bg-teal-500/20 text-teal-300 border-teal-500/30",
-  invoice_sent: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  invoice_paid: "bg-teal-500/20 text-teal-300 border-teal-500/30",
-  editing_photos: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-  photos_released: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
   appointment_complete: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
 };
 
+// Deposit/invoice progress no longer has its own statuses — appointments sit in
+// appointment_confirmed for their whole payment lifecycle, with the
+// deposit_requested/deposit_paid/invoice_sent/invoice_paid booleans carrying
+// the finer-grained progress. This derives the same six-step timeline from
+// status + those booleans instead of from status_name alone.
 const TIMELINE_STEPS = [
-  { key: "appointment_requested", label: "Requested" },
-  { key: "deposit_requested", label: "Deposit requested" },
-  { key: "deposit_paid", label: "Deposit paid" },
-  { key: "invoice_sent", label: "Invoice sent" },
-  { key: "invoice_paid", label: "Invoice paid" },
-  { key: "editing_photos", label: "Editing" },
-  { key: "photos_released", label: "Photos out" },
-  { key: "appointment_complete", label: "Complete" },
+  "Requested",
+  "Deposit requested",
+  "Deposit paid",
+  "Invoice sent",
+  "Invoice paid",
+  "Complete",
 ];
+
+function timelineIndex(appt: Pick<Appointment, "appointment_status" | "deposit_requested" | "deposit_paid" | "invoice_sent" | "invoice_paid">): number {
+  const status = appt.appointment_status?.status_name;
+  if (status === "appointment_requested") return appt.deposit_requested ? 1 : 0;
+  if (status === "appointment_confirmed") {
+    if (appt.invoice_paid) return 4;
+    if (appt.invoice_sent) return 3;
+    return 2;
+  }
+  if (status === "appointment_complete") return 5;
+  return -1;
+}
 
 const TERMINAL_STATUSES = new Set(["appointment_canceled", "appointment_rejected"]);
 
@@ -83,7 +96,9 @@ function StatusBadge({ statusName }: { statusName: string }) {
   );
 }
 
-function StatusTimeline({ statusName }: { statusName: string }) {
+function StatusTimeline({ appt }: { appt: Pick<Appointment, "appointment_status" | "deposit_requested" | "deposit_paid" | "invoice_sent" | "invoice_paid"> }) {
+  const statusName = appt.appointment_status?.status_name ?? "";
+
   if (TERMINAL_STATUSES.has(statusName)) {
     return (
       <div className="flex items-center gap-2">
@@ -93,16 +108,16 @@ function StatusTimeline({ statusName }: { statusName: string }) {
     );
   }
 
-  const currentIdx = TIMELINE_STEPS.findIndex((s) => s.key === statusName);
+  const currentIdx = timelineIndex(appt);
 
   return (
     <div className="overflow-x-auto pb-1">
       <div className="flex items-center gap-0 min-w-max">
-        {TIMELINE_STEPS.map((step, i) => {
+        {TIMELINE_STEPS.map((label, i) => {
           const done = i < currentIdx;
           const active = i === currentIdx;
           return (
-            <div key={step.key} className="flex items-center">
+            <div key={label} className="flex items-center">
               <div className="flex flex-col items-center gap-1">
                 <div
                   className={`w-2.5 h-2.5 rounded-full transition-colors ${
@@ -118,7 +133,7 @@ function StatusTimeline({ statusName }: { statusName: string }) {
                     active ? "text-white" : done ? "text-zinc-500" : "text-zinc-700"
                   }`}
                 >
-                  {step.label}
+                  {label}
                 </span>
               </div>
               {i < TIMELINE_STEPS.length - 1 && (
@@ -182,9 +197,26 @@ function DetailPanel({
 
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [photoUrl, setPhotoUrl] = useState(appt.photo_delivery_url ?? "");
   const [rejectReason, setRejectReason] = useState("");
   const [pendingStatus, setPendingStatus] = useState(status?.status_name ?? "");
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositInput, setDepositInput] = useState("");
+  const [finalAmount, setFinalAmount] = useState(
+    appt.final_invoice_amount != null ? String(appt.final_invoice_amount) : "",
+  );
+
+  // Prefills the deposit popup with the current settings-page default — the
+  // admin can still change it before clicking OK, this just saves typing.
+  useEffect(() => {
+    authFetch("/api/admin/pricing", { method: "GET" })
+      .then((res) => (res.ok ? (res.json() as Promise<{ kind: string; amount_cents: number }[]>) : []))
+      .then((rows) => {
+        const deposit = rows.find((r) => r.kind === "deposit");
+        if (deposit) setDepositInput(String(deposit.amount_cents / 100));
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function apiCall(method: string, path: string, body?: object): Promise<void> {
     const res = await authFetch(`/api/admin/appointments/${appt.id}/${path}`, {
@@ -211,6 +243,7 @@ function DetailPanel({
   }
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div
         className="w-full max-w-lg bg-zinc-950 border-l border-border/50 overflow-y-auto shadow-2xl"
@@ -232,7 +265,7 @@ function DetailPanel({
             <div className="flex items-center gap-3">
               {status && <StatusBadge statusName={status.status_name} />}
             </div>
-            <StatusTimeline statusName={statusName} />
+            <StatusTimeline appt={appt} />
           </div>
 
           {/* Change Status */}
@@ -270,11 +303,11 @@ function DetailPanel({
           )}
 
           {/* ── Actions ── */}
-          {statusName === "appointment_requested" && (
+          {statusName === "appointment_requested" && !appt.deposit_requested && (
             <section className="space-y-3">
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Actions</h3>
               <div className="flex gap-3">
-                <ActionButton onClick={() => run("confirm", () => apiCall("POST", "confirm"))} loading={loading === "confirm"}>
+                <ActionButton onClick={() => setShowDepositModal(true)} loading={loading === "confirm"}>
                   Confirm
                 </ActionButton>
                 <ActionButton variant="danger" onClick={() => run("reject", () => apiCall("POST", "reject", { reason: rejectReason || undefined }))} loading={loading === "reject"}>
@@ -293,7 +326,7 @@ function DetailPanel({
             </section>
           )}
 
-          {statusName === "deposit_requested" && (
+          {statusName === "appointment_requested" && appt.deposit_requested && !appt.deposit_paid && (
             <section>
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Actions</h3>
               <ActionButton variant="secondary" onClick={() => run("remind", () => apiCall("POST", "remind-deposit"))} loading={loading === "remind"}>
@@ -302,28 +335,43 @@ function DetailPanel({
             </section>
           )}
 
-          {statusName === "deposit_paid" && (
+          {statusName === "appointment_confirmed" && appt.deposit_paid && !appt.invoice_sent && (
             <section className="space-y-3">
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Final Invoice</h3>
+              <div className="flex gap-2 items-center">
+                <span className="text-muted-foreground text-sm">$</span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={finalAmount}
+                  onChange={(e) => setFinalAmount(e.target.value)}
+                  placeholder="Defaults to standard pricing"
+                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-zinc-600 transition-colors"
+                />
+                <ActionButton
+                  variant="secondary"
+                  onClick={() =>
+                    run("save-final-amount", () =>
+                      apiCall("PATCH", "final-invoice-amount", { amount: parseFloat(finalAmount) })
+                    )
+                  }
+                  loading={loading === "save-final-amount"}
+                  disabled={!finalAmount || isNaN(parseFloat(finalAmount)) || parseFloat(finalAmount) <= 0}
+                >
+                  Save
+                </ActionButton>
+              </div>
               <ActionButton
                 onClick={() => run("send-final-invoice", () => apiCall("POST", "send-final-invoice"))}
                 loading={loading === "send-final-invoice"}
               >
                 Send Final Invoice
               </ActionButton>
-              {isPast && (
-                <ActionButton
-                  variant="secondary"
-                  onClick={() => run("mark-editing", () => apiCall("POST", "mark-editing"))}
-                  loading={loading === "mark-editing"}
-                >
-                  Mark as Editing
-                </ActionButton>
-              )}
             </section>
           )}
 
-          {statusName === "invoice_sent" && (
+          {statusName === "appointment_confirmed" && appt.invoice_sent && !appt.invoice_paid && (
             <section>
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Actions</h3>
               <ActionButton
@@ -336,50 +384,14 @@ function DetailPanel({
             </section>
           )}
 
-          {(statusName === "invoice_paid" || (statusName === "deposit_paid" && isPast)) && statusName !== "deposit_paid" && (
-            <section>
-              <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Actions</h3>
-              {isPast && (
-                <ActionButton
-                  variant="secondary"
-                  onClick={() => run("mark-editing", () => apiCall("POST", "mark-editing"))}
-                  loading={loading === "mark-editing"}
-                >
-                  Mark as Editing
-                </ActionButton>
-              )}
-            </section>
-          )}
-
-          {statusName === "invoice_paid" && isPast && (
+          {statusName === "appointment_confirmed" && appt.invoice_paid && isPast && (
             <section>
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Actions</h3>
               <ActionButton
-                variant="secondary"
-                onClick={() => run("mark-editing", () => apiCall("POST", "mark-editing"))}
-                loading={loading === "mark-editing"}
+                onClick={() => run("complete", () => apiCall("POST", "complete"))}
+                loading={loading === "complete"}
               >
-                Mark as Editing
-              </ActionButton>
-            </section>
-          )}
-
-          {statusName === "editing_photos" && (
-            <section className="space-y-3">
-              <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Send Photo Link</h3>
-              <input
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="https://drive.google.com/…"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-zinc-600 transition-colors"
-              />
-              <ActionButton
-                onClick={() => run("send-photo-link", () => apiCall("POST", "send-photo-link", { photoUrl }))}
-                loading={loading === "send-photo-link"}
-                disabled={!photoUrl.trim()}
-              >
-                Send to Client
+                Mark Complete
               </ActionButton>
             </section>
           )}
@@ -470,6 +482,14 @@ function DetailPanel({
                   <span className="text-muted-foreground text-xs">—</span>
                 )}
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Deposit amount</span>
+                <span>
+                  {appt.deposit_amount != null
+                    ? `$${appt.deposit_amount.toFixed(2)}`
+                    : "—"}
+                </span>
+              </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Final invoice link</span>
                 {appt.stripe_final_url ? (
@@ -496,21 +516,6 @@ function DetailPanel({
             </div>
           </section>
 
-          {/* ── Photo Delivery ── */}
-          {appt.photo_delivery_url && (
-            <section>
-              <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Photo Delivery</h3>
-              <a
-                href={appt.photo_delivery_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-foreground/80 hover:text-foreground underline underline-offset-2 transition-colors break-all"
-              >
-                {appt.photo_delivery_url}
-              </a>
-            </section>
-          )}
-
           {/* ── Cal.com ── */}
           {appt.cal_booking_uid && (
             <section>
@@ -525,30 +530,65 @@ function DetailPanel({
         </div>
       </div>
     </div>
+
+    {showDepositModal && (
+      <div
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4"
+        onClick={() => setShowDepositModal(false)}
+      >
+        <div
+          className="w-full max-w-sm bg-zinc-950 border border-border/50 rounded-lg p-6 space-y-4 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="font-serif text-lg tracking-wide">Deposit amount</h3>
+          <p className="text-sm text-muted-foreground">
+            Sent to the client as a one-time Stripe payment link.
+          </p>
+          <div className="flex gap-2 items-center">
+            <span className="text-muted-foreground text-sm">$</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              autoFocus
+              value={depositInput}
+              onChange={(e) => setDepositInput(e.target.value)}
+              className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:border-zinc-600 transition-colors"
+            />
+          </div>
+          <div className="flex gap-3 justify-end">
+            <ActionButton variant="ghost" onClick={() => setShowDepositModal(false)}>
+              Cancel
+            </ActionButton>
+            <ActionButton
+              onClick={() => {
+                const amount = parseFloat(depositInput);
+                setShowDepositModal(false);
+                run("confirm", () => apiCall("POST", "confirm", { amount }));
+              }}
+              disabled={!depositInput || isNaN(parseFloat(depositInput)) || parseFloat(depositInput) <= 0}
+            >
+              OK
+            </ActionButton>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
 const ALL_STATUSES = [
   "appointment_requested",
+  "appointment_confirmed",
+  "appointment_complete",
   "appointment_canceled",
   "appointment_rejected",
-  "deposit_requested",
-  "deposit_paid",
-  "invoice_sent",
-  "invoice_paid",
-  "editing_photos",
-  "photos_released",
 ];
 
 const ALL_STATUSES_FULL = [
   { key: "appointment_requested",  label: "Appointment Requested" },
   { key: "appointment_confirmed",  label: "Appointment Confirmed" },
-  { key: "deposit_requested",      label: "Deposit Requested" },
-  { key: "deposit_paid",           label: "Deposit Paid" },
-  { key: "invoice_sent",           label: "Invoice Sent" },
-  { key: "invoice_paid",           label: "Invoice Paid" },
-  { key: "editing_photos",         label: "Editing Photos" },
-  { key: "photos_released",        label: "Photos Released" },
   { key: "appointment_complete",   label: "Appointment Complete" },
   { key: "appointment_canceled",   label: "Appointment Canceled" },
   { key: "appointment_rejected",   label: "Appointment Rejected" },
@@ -574,7 +614,7 @@ export default function AdminDashboard() {
         ? "/api/admin/appointments"
         : statusFilter
           ? `/api/admin/appointments?status=${encodeURIComponent(statusFilter)}`
-          : "/api/admin/appointments?status=appointment_requested&status=deposit_requested&status=deposit_paid&status=invoice_sent&status=invoice_paid&status=editing_photos";
+          : "/api/admin/appointments?status=appointment_requested&status=appointment_confirmed";
       const res = await authFetch(url, { method: "GET" });
       if (res.status === 401) { navigate("/admin/login"); return; }
       if (!res.ok) throw new Error("Failed to load appointments");
