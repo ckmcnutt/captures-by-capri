@@ -468,6 +468,30 @@ function DetailPanel({
             <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Payment</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Deposit paid</span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    appt.deposit_paid
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : "bg-zinc-500/20 text-zinc-400 border-zinc-500/30"
+                  }`}
+                >
+                  {appt.deposit_paid ? "Paid" : "Unpaid"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Final invoice paid</span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    appt.invoice_paid
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : "bg-zinc-500/20 text-zinc-400 border-zinc-500/30"
+                  }`}
+                >
+                  {appt.invoice_paid ? "Paid" : "Unpaid"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Deposit link</span>
                 {appt.stripe_deposit_url ? (
                   <a
