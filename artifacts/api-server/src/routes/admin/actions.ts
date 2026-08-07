@@ -186,6 +186,43 @@ router.post("/appointments/:id/remind-deposit", isAdmin, async (req, res): Promi
   }
 });
 
+// ── Regenerate deposit link ─────────────────────────────────────────────────────
+
+router.post("/appointments/:id/regenerate-deposit-link", isAdmin, async (req, res): Promise<void> => {
+  const id = parseId(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid appointment id" }); return; }
+
+  const amount = parseAmount(req.body);
+  if (amount === null) { res.status(400).json({ error: "amount must be a positive number" }); return; }
+
+  try {
+    const appt = await loadForAction(res, id, (a) => {
+      if (!a.deposit_requested) return "No deposit has been requested for this appointment";
+      if (a.deposit_paid) return "The deposit has already been paid";
+      return null;
+    });
+    if (!appt) return;
+
+    const { sessionId, url: paymentUrl } = await createCheckoutSession(
+      PRICING_KIND.deposit,
+      id,
+      Math.round(amount * 100),
+    );
+
+    await updateAppointment(id, {
+      stripe_deposit_invoice_id: sessionId,
+      stripe_deposit_url: paymentUrl,
+      deposit_amount: amount,
+    });
+
+    req.log.info({ appointmentId: id }, "Deposit link regenerated");
+    res.json({ ok: true, paymentUrl });
+  } catch (err) {
+    req.log.error({ err, appointmentId: id }, "Failed to regenerate deposit link");
+    res.status(500).json({ error: "Failed to regenerate deposit link" });
+  }
+});
+
 // ── Set final invoice amount ────────────────────────────────────────────────────
 
 /**

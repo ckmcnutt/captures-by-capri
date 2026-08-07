@@ -201,6 +201,8 @@ function DetailPanel({
   const [pendingStatus, setPendingStatus] = useState(status?.status_name ?? "");
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositInput, setDepositInput] = useState("");
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [regenDepositInput, setRegenDepositInput] = useState("");
   const [finalAmount, setFinalAmount] = useState(
     appt.final_invoice_amount != null ? String(appt.final_invoice_amount) : "",
   );
@@ -329,7 +331,13 @@ function DetailPanel({
           {statusName === "appointment_requested" && appt.deposit_requested && !appt.deposit_paid && (
             <section>
               <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Actions</h3>
-              <ActionButton variant="secondary" onClick={() => run("remind", () => apiCall("POST", "remind-deposit"))} loading={loading === "remind"}>
+              <ActionButton
+                variant="secondary"
+                onClick={() => {
+                  setRegenDepositInput(appt.deposit_amount != null ? String(appt.deposit_amount) : "");
+                  setShowReminderModal(true);
+                }}
+              >
                 Send Deposit Reminder
               </ActionButton>
             </section>
@@ -468,6 +476,30 @@ function DetailPanel({
             <h3 className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-3">Payment</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Deposit paid</span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    appt.deposit_paid
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : "bg-zinc-500/20 text-zinc-400 border-zinc-500/30"
+                  }`}
+                >
+                  {appt.deposit_paid ? "Paid" : "Unpaid"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Final invoice paid</span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    appt.invoice_paid
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                      : "bg-zinc-500/20 text-zinc-400 border-zinc-500/30"
+                  }`}
+                >
+                  {appt.invoice_paid ? "Paid" : "Unpaid"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Deposit link</span>
                 {appt.stripe_deposit_url ? (
                   <a
@@ -569,6 +601,85 @@ function DetailPanel({
               disabled={!depositInput || isNaN(parseFloat(depositInput)) || parseFloat(depositInput) <= 0}
             >
               OK
+            </ActionButton>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {showReminderModal && (
+      <div
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4"
+        onClick={() => setShowReminderModal(false)}
+      >
+        <div
+          className="w-full max-w-sm bg-zinc-950 border border-border/50 rounded-lg p-6 space-y-4 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="font-serif text-lg tracking-wide">Deposit Reminder</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Current link</span>
+              {appt.stripe_deposit_url ? (
+                <a
+                  href={appt.stripe_deposit_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-400 hover:text-blue-300 underline truncate max-w-[12rem]"
+                >
+                  Open link ↗
+                </a>
+              ) : (
+                <span className="text-muted-foreground text-xs">—</span>
+              )}
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Amount</span>
+              <span>
+                {appt.deposit_amount != null ? `$${appt.deposit_amount.toFixed(2)}` : "—"}
+              </span>
+            </div>
+          </div>
+
+          <div className="border-t border-border/50 pt-4 space-y-2">
+            <p className="text-xs text-muted-foreground">Need to change the amount? Regenerate the link first.</p>
+            <div className="flex gap-2 items-center">
+              <span className="text-muted-foreground text-sm">$</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={regenDepositInput}
+                onChange={(e) => setRegenDepositInput(e.target.value)}
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:border-zinc-600 transition-colors"
+              />
+              <ActionButton
+                variant="secondary"
+                onClick={() =>
+                  run("regen-deposit", () =>
+                    apiCall("POST", "regenerate-deposit-link", { amount: parseFloat(regenDepositInput) })
+                  )
+                }
+                loading={loading === "regen-deposit"}
+                disabled={!regenDepositInput || isNaN(parseFloat(regenDepositInput)) || parseFloat(regenDepositInput) <= 0}
+              >
+                Regenerate
+              </ActionButton>
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <ActionButton variant="ghost" onClick={() => setShowReminderModal(false)}>
+              Cancel
+            </ActionButton>
+            <ActionButton
+              onClick={() => {
+                setShowReminderModal(false);
+                run("remind", () => apiCall("POST", "remind-deposit"));
+              }}
+              loading={loading === "remind"}
+            >
+              Send Reminder
             </ActionButton>
           </div>
         </div>
