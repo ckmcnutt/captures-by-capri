@@ -55,3 +55,6 @@ Thumbs.db
 *.dump
 /db/postgres
 /db/pgadmin
+
+# Deploy logs
+deploy.log
