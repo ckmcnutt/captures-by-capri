@@ -1,1 +1,0 @@
-ALTER TABLE "appointment" DROP COLUMN "photo_delivery_url";

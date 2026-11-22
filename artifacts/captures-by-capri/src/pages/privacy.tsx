@@ -41,7 +41,7 @@ export default function Privacy() {
             <ul>
               <li><strong>Contact information</strong> — your name, email address, and phone number.</li>
               <li><strong>Appointment details</strong> — your preferred session date, time, location, and session type.</li>
-              <li><strong>Payment information</strong> — processed securely through Stripe. We do not store full card numbers.</li>
+              <li><strong>Payment information</strong> — payments are made in person. We do not collect or store card details online.</li>
               <li><strong>Communications</strong> — messages you send us via email, SMS, or our booking form.</li>
             </ul>
           </Section>
@@ -53,7 +53,7 @@ export default function Privacy() {
               <li>Send appointment reminders, deposit requests, and invoices.</li>
               <li>Communicate with you about your session via your preferred contact method (email or SMS).</li>
               <li>Deliver your edited photos and related links.</li>
-              <li>Process payments for deposits and session fees.</li>
+              <li>Keep track of in-person payments for deposits and session fees.</li>
               <li>Respond to questions and support requests.</li>
             </ul>
           </Section>
@@ -76,12 +76,10 @@ export default function Privacy() {
           <Section title="5. How We Share Your Information">
             <p>We do not sell your personal information. We may share it only with:</p>
             <ul>
-              <li><strong>Stripe</strong> — to process deposits and payments securely.</li>
               <li><strong>Cal.com</strong> — to manage appointment scheduling.</li>
               <li><strong>Your mobile carrier</strong> — SMS notifications you have consented to receive are delivered via your carrier's email-to-text gateway using the phone number you provide.</li>
               <li><strong>Abstract API</strong> — to identify your mobile carrier so text notifications can be routed correctly.</li>
               <li><strong>Resend</strong> — to deliver transactional emails.</li>
-              <li><strong>Supabase</strong> — our secure database provider for storing appointment records.</li>
             </ul>
             <p>
               Each of these service providers is bound by their own privacy policies and industry-standard data protection

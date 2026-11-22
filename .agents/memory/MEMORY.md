@@ -1,1 +1,0 @@
-- [Self-hosting gotchas](self-hosting-gotchas.md) — non-obvious traps in the self-hosted stack: daily-only cron, the appointment.id sequence, image filename case, Express 5 wildcards

@@ -85,8 +85,8 @@ export default function Terms() {
 
           <Section title="7. Payments">
             <p>
-              Payments are processed securely through Stripe. By submitting a payment, you authorize {BUSINESS_NAME}
-              to charge the amount due for your deposit or session fee. All prices are in USD.
+              Deposits and session fees are paid in person, with payment details arranged directly with
+              {BUSINESS_NAME}. All prices are in USD.
             </p>
           </Section>
 

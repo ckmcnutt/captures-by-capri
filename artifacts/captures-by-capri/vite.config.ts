@@ -48,8 +48,6 @@ export default defineConfig({
       strict: true,
     },
     proxy: {
-      // changeOrigin: false keeps the Host header as localhost:<WEB_PORT> so the
-      // admin session cookie's implicit domain matches.
       "/api": { target: apiTarget, changeOrigin: false },
       "/media": { target: apiTarget, changeOrigin: false },
     },

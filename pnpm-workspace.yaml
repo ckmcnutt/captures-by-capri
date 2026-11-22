@@ -28,26 +28,15 @@ packages:
 
 catalog:
   '@tailwindcss/vite': ^4.1.14
-  '@tanstack/react-query': ^5.90.21
-  '@types/cookie-parser': ^1.4.9
   '@types/node': ^25.3.3
-  '@types/pg': ^8.15.6
   '@types/react': ^19.2.0
   '@types/react-dom': ^19.2.0
   '@vitejs/plugin-react': ^5.0.4
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
-  cookie-parser: ^1.4.7
   dotenv: ^17.2.4
-  # Keep drizzle-kit and drizzle-orm as a matched pair. A mismatch generates
-  # plausible-looking but wrong SQL, especially around identity columns and
-  # numeric modes. 0.31.x kit pairs with 0.45.x orm. Avoid the 1.0.0-rc line.
-  drizzle-kit: ^0.31.10
-  drizzle-orm: ^0.45.2
   framer-motion: ^12.23.24
   lucide-react: ^0.545.0
-  node-cron: ^4.2.1
-  pg: ^8.16.3
   # Must be this exact version because expo requires it
   react: 19.1.0
   # Must be this exact version because expo requires it
@@ -67,11 +56,8 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
-  # drizzle-kit uses esbuild internally on an older version that's vulnerable,
-  # this overrides it. Keep: drizzle-kit is now a real dependency.
-  "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   # Floor esbuild above the CVE-affected releases. A caret rather than an exact
-  # pin so drizzle-kit's vendored esbuild can co-resolve.
+  # pin.
   esbuild: "^0.27.3"
 
 allowBuilds:

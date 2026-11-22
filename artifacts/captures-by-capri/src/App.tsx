@@ -1,6 +1,4 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/home";
@@ -8,21 +6,11 @@ import Portfolio from "@/pages/portfolio";
 import Book from "@/pages/book";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
-import AdminLogin from "@/pages/admin/login";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminSettings from "@/pages/admin/settings";
 import { Layout } from "@/components/layout";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin/settings">
-        <AdminSettings />
-      </Route>
-      <Route path="/admin">
-        <AdminDashboard />
-      </Route>
       <Route path="/">
         <Layout><Home /></Layout>
       </Route>
@@ -45,12 +33,9 @@ function Router() {
 
 function App() {
   return (
-    <TooltipProvider>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Router />
-      </WouterRouter>
-      <Toaster />
-    </TooltipProvider>
+    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+      <Router />
+    </WouterRouter>
   );
 }
 
