@@ -10,6 +10,17 @@ const CAL_ORIGIN = calUrl.origin;
 const CAL_EMBED_JS_URL =
   CAL_ORIGIN === "https://cal.com" ? undefined : `${CAL_ORIGIN}/embed/embed.js`;
 
+// Fill in prices as strings, e.g. "$20".
+const SESSIONS = [
+  { type: "Brand", deposit: "", price30: "", price60: "" },
+  { type: "Couples", deposit: "", price30: "", price60: "" },
+  { type: "Engagement", deposit: "", price30: "", price60: "" },
+  { type: "Family", deposit: "", price30: "", price60: "" },
+  { type: "Maternity", deposit: "", price30: "", price60: "" },
+  { type: "Portrait", deposit: "", price30: "", price60: "" },
+  { type: "Other", deposit: "", price30: "", price60: "" },
+];
+
 export default function Book() {
   return (
     <div className="min-h-screen pt-24">
@@ -67,14 +78,26 @@ export default function Book() {
 
             <div className="border-t border-border pt-8 space-y-3">
               <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Sessions</p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {["Brand", "Couples", "Engagement", "Family", "Maternity", "Portrait", "Other"].map((type) => (
-                  <li key={type} className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
-                    {type}
-                  </li>
-                ))}
-              </ul>
+              <table className="w-full text-sm text-muted-foreground text-left">
+                <thead>
+                  <tr className="border-b border-border text-foreground">
+                    <th className="py-2 pr-4 font-normal">Session Type</th>
+                    <th className="py-2 pr-4 font-normal">Deposit</th>
+                    <th className="py-2 pr-4 font-normal">30min price</th>
+                    <th className="py-2 font-normal">1hr price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {SESSIONS.map((s) => (
+                    <tr key={s.type} className="border-b border-border/50">
+                      <td className="py-2 pr-4">{s.type}</td>
+                      <td className="py-2 pr-4">{s.deposit}</td>
+                      <td className="py-2 pr-4">{s.price30}</td>
+                      <td className="py-2">{s.price60}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </motion.div>
 
