@@ -12,13 +12,13 @@ const CAL_EMBED_JS_URL =
 
 // Fill in prices as strings, e.g. "$20".
 const SESSIONS = [
-  { type: "Brand", deposit: "", price30: "", price60: "" },
-  { type: "Couples", deposit: "", price30: "", price60: "" },
-  { type: "Engagement", deposit: "", price30: "", price60: "" },
-  { type: "Family", deposit: "", price30: "", price60: "" },
-  { type: "Maternity", deposit: "", price30: "", price60: "" },
-  { type: "Portrait", deposit: "", price30: "", price60: "" },
-  { type: "Other", deposit: "", price30: "", price60: "" },
+  { type: "Brand", deposit: "$100 / $200", price30: "$200", price60: "$400" },
+  { type: "Birthday", deposit: "$75 / $125", price30: "$150", price60: "$250" },
+  { type: "Couples", deposit: "$50 / $100", price30: "$100", price60: "$200" },
+  { type: "Engagement", deposit: "$125 / $225", price30: "$250", price60: "$450" },
+  { type: "Family", deposit: "$75 / $125", price30: "$150", price60: "$250" },
+  { type: "Maternity", deposit: "$100 / $150", price30: "$200", price60: "$300" },
+  { type: "Portrait", deposit: "$50 / $100", price30: "$100", price60: "$200" },
 ];
 
 export default function Book() {
@@ -82,9 +82,9 @@ export default function Book() {
                 <thead>
                   <tr className="border-b border-border text-foreground">
                     <th className="py-2 pr-4 font-normal">Session Type</th>
-                    <th className="py-2 pr-4 font-normal">Deposit</th>
+                    <th className="py-2 pr-4 font-normal">Deposit (30min / 60min)</th>
                     <th className="py-2 pr-4 font-normal">30min price</th>
-                    <th className="py-2 font-normal">1hr price</th>
+                    <th className="py-2 font-normal">60min price</th>
                   </tr>
                 </thead>
                 <tbody>
