@@ -52,12 +52,10 @@ export default function Book() {
               <ul className="space-y-4 text-sm text-muted-foreground">
                 {[
                   "Pick any available slot - no back and forth",
-                  "$50 deposit required at booking - refundable if canceled at least 1 week prior. APPOINTMENTS ARE NOT GUARANTEED UNTIL DEPOSIT IS PAID.",
+                  "Deposit required at booking - refundable if canceled at least 1 week prior. APPOINTMENTS ARE NOT GUARANTEED UNTIL DEPOSIT IS PAID.",
                   "Remainder of balance due 1 day prior to appointment",
                   "A followup email or text with additional questions",
-                  "15+ edited photos for a 30 minute session - $100",
-                  "30+ edited photos for a 1 hour session - $200",
-                  "For sessions located over 45 minutes away from Cullman AL, a travel fee may be applied",
+                  "For sessions located over 30 minutes away from Cullman AL, a travel fee may be applied",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-primary mt-0.5 shrink-0">—</span>
