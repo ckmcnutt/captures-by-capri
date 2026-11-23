@@ -75,8 +75,14 @@ export default function Book() {
                 ))}
               </ul>
             </div>
+          </motion.div>
 
-            <div className="border-t border-border pt-8 space-y-3">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            <div className="space-y-3">
               <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Sessions</p>
               <table className="w-full text-sm text-muted-foreground text-left">
                 <thead>
@@ -100,36 +106,37 @@ export default function Book() {
               </table>
             </div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <div
-              className="border border-border overflow-hidden bg-card"
-              data-testid="calcom-embed"
-              aria-label="Book a session with Capri"
-            >
-              <Cal
-                calLink={CAL_LINK}
-                calOrigin={CAL_ORIGIN}
-                embedJsUrl={CAL_EMBED_JS_URL}
-                style={{ width: "100%", minHeight: "700px" }}
-              />
-            </div>
-
-            <div className="mt-8 space-y-3 border-t border-border pt-6">
-              <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">SMS Consent</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                By selecting SMS as my preferred contact method, I agree to receive text messages
-                from Captures By Capri regarding my booking, appointment reminders, payment links,
-                invoices, and customer support. Message frequency varies. Message and data rates may apply.
-                Reply <strong>STOP</strong> to opt out and <strong>HELP</strong> for help.
-              </p>
-            </div>
-          </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="mt-16"
+        >
+          <div
+            className="border border-border overflow-hidden bg-card"
+            data-testid="calcom-embed"
+            aria-label="Book a session with Capri"
+          >
+            <Cal
+              calLink={CAL_LINK}
+              calOrigin={CAL_ORIGIN}
+              embedJsUrl={CAL_EMBED_JS_URL}
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div className="mt-8 space-y-3 border-t border-border pt-6">
+            <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">SMS Consent</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              By selecting SMS as my preferred contact method, I agree to receive text messages
+              from Captures By Capri regarding my booking, appointment reminders, payment links,
+              invoices, and customer support. Message frequency varies. Message and data rates may apply.
+              Reply <strong>STOP</strong> to opt out and <strong>HELP</strong> for help.
+            </p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
